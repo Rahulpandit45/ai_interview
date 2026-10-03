@@ -44,7 +44,9 @@ class InterviewResponse(db.Model):
         v_url = None
         if self.video_path:
             clean_v = self.video_path.replace("\\", "/")
-            if clean_v.startswith("http://") or clean_v.startswith("https://"):
+            if clean_v.startswith("/api/"):
+                v_url = clean_v
+            elif clean_v.startswith("http://") or clean_v.startswith("https://"):
                 v_url = clean_v
             elif "uploads/" in clean_v:
                 v_url = "/" + clean_v[clean_v.find("uploads/"):]
@@ -55,6 +57,9 @@ class InterviewResponse(db.Model):
             else:
                 import os
                 v_url = f"/uploads/recordings/{os.path.basename(clean_v)}"
+
+        if not v_url and self.id:
+            v_url = f"/api/interview/response/{self.id}/media"
 
         return {
             "id": self.id,
@@ -71,6 +76,42 @@ class InterviewResponse(db.Model):
             "duration_seconds": round(self.duration_seconds or 0.0, 1),
             "eye_contact_pct": round(self.eye_contact_pct or 0.0, 1),
             "head_stability_pct": round(self.head_stability_pct or 0.0, 1),
+            "created_at": self.created_at.isoformat() if self.created_at else None
+        }
+
+class InterviewMedia(db.Model):
+    """
+    Direct Database Media Storage for Audio & Video recordings.
+    Completely eliminates dependency on local disk storage.
+    Binary content is stored in PostgreSQL (BYTEA), SQLite (BLOB), or MySQL (LONGBLOB).
+    Linked directly to Candidate ID, Interview ID, and optional Question Response ID.
+    """
+    __tablename__ = "interview_media"
+
+    id = db.Column(db.Integer, primary_key=True)
+    candidate_id = db.Column(db.String(50), nullable=False, index=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id", ondelete="CASCADE"), nullable=True, index=True)
+    interview_id = db.Column(db.Integer, db.ForeignKey("interviews.id", ondelete="CASCADE"), nullable=False, index=True)
+    response_id = db.Column(db.Integer, db.ForeignKey("interview_responses.id", ondelete="CASCADE"), nullable=True, index=True)
+    media_type = db.Column(db.String(30), default="video")  # "video", "audio"
+    file_name = db.Column(db.String(255), nullable=False)
+    mime_type = db.Column(db.String(100), default="video/webm")
+    file_size = db.Column(db.BigInteger, default=0)
+    data = db.Column(db.LargeBinary, nullable=False)
+    created_at = db.Column(db.DateTime, default=utc_now)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "candidate_id": self.candidate_id,
+            "user_id": self.user_id,
+            "interview_id": self.interview_id,
+            "response_id": self.response_id,
+            "media_type": self.media_type,
+            "file_name": self.file_name,
+            "mime_type": self.mime_type,
+            "file_size": self.file_size or (len(self.data) if self.data else 0),
+            "media_url": f"/api/interview/media/{self.id}",
             "created_at": self.created_at.isoformat() if self.created_at else None
         }
 
@@ -101,12 +142,15 @@ class Interview(db.Model):
     responses = db.relationship(InterviewResponse, backref="interview", cascade="all, delete-orphan", lazy=True)
     violations = db.relationship(ProctoringViolation, backref="interview", cascade="all, delete-orphan", lazy=True)
     report = db.relationship("Report", backref="interview", uselist=False, cascade="all, delete-orphan")
+    media_files = db.relationship(InterviewMedia, backref="interview", cascade="all, delete-orphan", lazy=True)
 
     def to_dict(self):
         rec_url = self.recording_url
         if not rec_url and self.recording_path:
             clean_rec = self.recording_path.replace("\\", "/")
-            if clean_rec.startswith("http://") or clean_rec.startswith("https://"):
+            if clean_rec.startswith("/api/"):
+                rec_url = clean_rec
+            elif clean_rec.startswith("http://") or clean_rec.startswith("https://"):
                 rec_url = clean_rec
             elif "uploads/" in clean_rec:
                 rec_url = "/" + clean_rec[clean_rec.find("uploads/"):]
@@ -117,6 +161,9 @@ class Interview(db.Model):
             else:
                 import os
                 rec_url = f"/uploads/recordings/{os.path.basename(clean_rec)}"
+
+        if not rec_url and self.id:
+            rec_url = f"/api/interview/{self.id}/media"
 
         photo_url = None
         if self.interview_photo:

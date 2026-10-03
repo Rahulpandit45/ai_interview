@@ -1,6 +1,8 @@
+import os
 import json
-from flask import Blueprint, request, jsonify
-from backend.models.interview import Interview
+import tempfile
+from flask import Blueprint, request, jsonify, Response
+from backend.models.interview import Interview, InterviewResponse, InterviewMedia
 from backend.services.interview_service import (
     start_interview_session,
     process_question_response,
@@ -166,21 +168,143 @@ def get_user_interviews(current_user):
         "interviews": [i.to_dict() for i in interviews]
     }), 200
 
+def stream_db_media(data: bytes, mime_type: str = "video/webm", filename: str = "recording.webm"):
+    """
+    Streams binary media data directly from database storage with RFC 7233 HTTP Range support.
+    Enables seeking, scrub bar buffering, and low-latency playback in HTML5 video/audio players.
+    """
+    if not data:
+        return jsonify({"status": "error", "message": "Media content not found in database"}), 404
+
+    total_size = len(data)
+    range_header = request.headers.get("Range")
+
+    if not range_header:
+        resp = Response(data, status=200, mimetype=mime_type or "video/webm")
+        resp.headers["Accept-Ranges"] = "bytes"
+        resp.headers["Content-Length"] = str(total_size)
+        resp.headers["Content-Disposition"] = f'inline; filename="{filename}"'
+        resp.headers["Cache-Control"] = "public, max-age=3600"
+        return resp
+
+    try:
+        range_val = range_header.strip().replace("bytes=", "")
+        parts = range_val.split("-")
+        start = int(parts[0]) if parts[0] else 0
+        end = int(parts[1]) if len(parts) > 1 and parts[1] else total_size - 1
+
+        if start >= total_size or end >= total_size or start > end:
+            return Response(status=416, headers={"Content-Range": f"bytes */{total_size}"})
+
+        chunk = data[start:end + 1]
+        resp = Response(chunk, status=206, mimetype=mime_type or "video/webm")
+        resp.headers["Content-Range"] = f"bytes {start}-{end}/{total_size}"
+        resp.headers["Accept-Ranges"] = "bytes"
+        resp.headers["Content-Length"] = str(len(chunk))
+        resp.headers["Content-Disposition"] = f'inline; filename="{filename}"'
+        resp.headers["Cache-Control"] = "public, max-age=3600"
+        return resp
+    except Exception:
+        resp = Response(data, status=200, mimetype=mime_type or "video/webm")
+        resp.headers["Accept-Ranges"] = "bytes"
+        resp.headers["Content-Length"] = str(total_size)
+        return resp
+
+@interview_bp.route("/<int:interview_id>/media", methods=["GET"])
+def get_interview_media(interview_id):
+    """
+    Fetches the primary video/audio recording for an interview directly from database storage.
+    Supports Range header requests for continuous HTML5 streaming and instant scrubbing.
+    """
+    # Look for recorded media linked to this interview
+    media_rec = InterviewMedia.query.filter_by(interview_id=interview_id).order_by(InterviewMedia.id.desc()).first()
+    if media_rec and media_rec.data:
+        return stream_db_media(media_rec.data, media_rec.mime_type, media_rec.file_name)
+
+    # Fallback: check if any response has media
+    responses = InterviewResponse.query.filter_by(interview_id=interview_id).order_by(InterviewResponse.id.desc()).all()
+    for r in responses:
+        resp_media = InterviewMedia.query.filter_by(response_id=r.id).first()
+        if resp_media and resp_media.data:
+            return stream_db_media(resp_media.data, resp_media.mime_type, resp_media.file_name)
+
+    # Legacy fallback: check CandidateFile
+    interview = Interview.query.get_or_404(interview_id)
+    cid = interview.user.candidate_id if interview.user else None
+    if cid:
+        from backend.services.storage_service import StorageService
+        cand_key = f"{cid}/interview/video/{cid}.mp4"
+        dbytes, mtype, fname = StorageService.get_file_stream_or_bytes(cand_key)
+        if dbytes:
+            return stream_db_media(dbytes, mtype, fname)
+
+    return jsonify({"status": "error", "message": "No media recording found for this interview in database"}), 404
+
+@interview_bp.route("/media/<int:media_id>", methods=["GET"])
+def get_media_by_id(media_id):
+    """
+    Fetches specific media record directly from the database by its primary key ID.
+    """
+    media_rec = InterviewMedia.query.get_or_404(media_id)
+    return stream_db_media(media_rec.data, media_rec.mime_type, media_rec.file_name)
+
+@interview_bp.route("/response/<int:response_id>/media", methods=["GET"])
+def get_response_media(response_id):
+    """
+    Fetches the media recorded for a specific interview question response directly from the database.
+    """
+    media_rec = InterviewMedia.query.filter_by(response_id=response_id).first()
+    if media_rec and media_rec.data:
+        return stream_db_media(media_rec.data, media_rec.mime_type, media_rec.file_name)
+
+    resp = InterviewResponse.query.get_or_404(response_id)
+    media_rec = InterviewMedia.query.filter_by(interview_id=resp.interview_id).order_by(InterviewMedia.id.desc()).first()
+    if media_rec and media_rec.data:
+        return stream_db_media(media_rec.data, media_rec.mime_type, media_rec.file_name)
+
+    return jsonify({"status": "error", "message": "No media found for this response"}), 404
+
+@interview_bp.route("/<int:interview_id>/media-list", methods=["GET"])
+def list_interview_media(interview_id):
+    """
+    Returns metadata list of all media recordings in the database for an interview.
+    """
+    media_items = InterviewMedia.query.filter_by(interview_id=interview_id).order_by(InterviewMedia.id.asc()).all()
+    return jsonify({
+        "status": "success",
+        "interview_id": interview_id,
+        "media": [m.to_dict() for m in media_items]
+    }), 200
+
 @interview_bp.route("/test-transcription", methods=["POST"])
 def test_transcription():
     """
-    Direct test endpoint for Whisper transcription (Phase 9 requirement).
+    Direct test endpoint for Whisper transcription without local persistent file storage.
     """
     if "audio" not in request.files:
         return jsonify({"status": "error", "message": "No audio file provided"}), 400
 
     audio_file = request.files["audio"]
-    saved_path, err = save_uploaded_file(audio_file, Config.RECORDING_UPLOAD_FOLDER, Config.ALLOWED_RECORDING_EXTENSIONS)
-    if err:
-        return jsonify({"status": "error", "message": err}), 400
+    if not audio_file or not audio_file.filename:
+        return jsonify({"status": "error", "message": "Invalid audio file"}), 400
 
-    result = transcribe_audio(saved_path, model_size=Config.WHISPER_MODEL_SIZE)
-    return jsonify({
-        "status": "success",
-        "result": result
-    }), 200
+    ext = audio_file.filename.rsplit(".", 1)[-1].lower() if "." in audio_file.filename else "wav"
+    raw_bytes = audio_file.read()
+
+    temp_path = None
+    try:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=f".{ext}") as tmp:
+            tmp.write(raw_bytes)
+            temp_path = tmp.name
+
+        result = transcribe_audio(temp_path, model_size=Config.WHISPER_MODEL_SIZE)
+        return jsonify({
+            "status": "success",
+            "result": result
+        }), 200
+    finally:
+        if temp_path and os.path.exists(temp_path):
+            try:
+                os.unlink(temp_path)
+            except Exception:
+                pass

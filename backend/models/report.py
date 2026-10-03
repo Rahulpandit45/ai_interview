@@ -59,7 +59,9 @@ class Report(db.Model):
         rec_url = self.recording_url
         if not rec_url and self.recording_path:
             clean_rec = self.recording_path.replace("\\", "/")
-            if clean_rec.startswith("http://") or clean_rec.startswith("https://"):
+            if clean_rec.startswith("/api/"):
+                rec_url = clean_rec
+            elif clean_rec.startswith("http://") or clean_rec.startswith("https://"):
                 rec_url = clean_rec
             elif "uploads/" in clean_rec:
                 rec_url = "/" + clean_rec[clean_rec.find("uploads/"):]
@@ -70,6 +72,9 @@ class Report(db.Model):
             else:
                 import os
                 rec_url = f"/uploads/recordings/{os.path.basename(clean_rec)}"
+
+        if not rec_url and self.interview_id:
+            rec_url = f"/api/interview/{self.interview_id}/media"
 
         photo_url = None
         if self.user and self.user.profile_photo:

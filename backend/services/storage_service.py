@@ -105,34 +105,38 @@ class StorageService:
             content_type, _ = mimetypes.guess_type(filename)
             content_type = content_type or "application/octet-stream"
 
-        # Determine target local folder for local backup / cache
-        if file_type in ["resume", "cv"]:
-            target_folder = Config.RESUME_UPLOAD_FOLDER
-        elif file_type in ["registration_photo", "registration-photo", "profile_photo", "photo"]:
-            target_folder = Config.PROFILE_UPLOAD_FOLDER
-        elif file_type in ["interview_video", "video", "interview_photo", "photos"]:
-            target_folder = Config.RECORDING_UPLOAD_FOLDER
-        elif file_type in ["report"]:
-            target_folder = Config.REPORTS_DIR
+        # Determine target local folder for non-media files (audio & video are stored strictly in DB)
+        is_media_file = file_type in ["interview_video", "video", "interview_audio", "audio"]
+        if not is_media_file:
+            if file_type in ["resume", "cv"]:
+                target_folder = Config.RESUME_UPLOAD_FOLDER
+            elif file_type in ["registration_photo", "registration-photo", "profile_photo", "photo"]:
+                target_folder = Config.PROFILE_UPLOAD_FOLDER
+            elif file_type in ["report"]:
+                target_folder = Config.REPORTS_DIR
+            else:
+                target_folder = Config.UPLOAD_FOLDER
+
+            os.makedirs(target_folder, exist_ok=True)
+
+            # Save local copy if not already on disk
+            if not local_path or not os.path.exists(local_path):
+                local_filename = os.path.basename(object_key)
+                local_dest = os.path.join(target_folder, local_filename)
+                try:
+                    if raw_bytes is not None:
+                        with open(local_dest, "wb") as f:
+                            f.write(raw_bytes)
+                        local_path = local_dest
+                except Exception as e:
+                    logger.warning(f"Could not save local cache file ({e}).")
         else:
-            target_folder = Config.UPLOAD_FOLDER
-
-        os.makedirs(target_folder, exist_ok=True)
-
-        # Save local copy if not already on disk
-        if not local_path or not os.path.exists(local_path):
-            local_filename = os.path.basename(object_key)
-            local_dest = os.path.join(target_folder, local_filename)
-            try:
-                if raw_bytes is not None:
-                    with open(local_dest, "wb") as f:
-                        f.write(raw_bytes)
-                    local_path = local_dest
-            except Exception as e:
-                logger.warning(f"Could not save local cache file ({e}).")
+            # Audio and Video are stored directly in DB - no local disk copy
+            local_path = None
+            storage_provider = "database"
 
         # 1. Upload to Supabase Storage if configured
-        storage_provider = "local"
+        storage_provider = "database" if is_media_file else "local"
         public_url = None
 
         if SupabaseStorageClient.is_configured():
@@ -159,8 +163,8 @@ class StorageService:
                     public_url = supa_res.get("url")
                     logger.info(f"[Supabase Storage] Uploaded '{object_key}' to bucket '{SupabaseStorageClient.get_bucket_name()}'.")
             except Exception as e:
-                logger.error(f"[Supabase Storage Error] Failed to upload to Supabase ({e}). Falling back to local storage.")
-                storage_provider = "local"
+                logger.error(f"[Supabase Storage Error] Failed to upload to Supabase ({e}). Falling back to database storage.")
+                storage_provider = "database" if is_media_file else "local"
 
         # 2. Record or update reference in PostgreSQL `candidate_files` table
         try:
@@ -228,7 +232,28 @@ class StorageService:
                 except Exception:
                     pass
 
-        # 2. Fetch from Supabase Storage
+        # 2. Check Database InterviewMedia table for audio/video media
+        try:
+            from backend.models.interview import InterviewMedia
+            base_fname = os.path.basename(object_key)
+            cand_id = object_key.split("/")[0] if "/" in object_key else None
+            query = InterviewMedia.query.filter(
+                (InterviewMedia.file_name == base_fname) |
+                (InterviewMedia.file_name == filename)
+            )
+            if cand_id:
+                query = query.filter_by(candidate_id=cand_id)
+            media_rec = query.order_by(InterviewMedia.id.desc()).first()
+
+            if not media_rec and cand_id:
+                media_rec = InterviewMedia.query.filter_by(candidate_id=cand_id).order_by(InterviewMedia.id.desc()).first()
+
+            if media_rec and media_rec.data:
+                return media_rec.data, media_rec.mime_type or content_type, media_rec.file_name or filename
+        except Exception as e:
+            logger.debug(f"InterviewMedia retrieval attempt: {e}")
+
+        # 3. Fetch from Supabase Storage
         if SupabaseStorageClient.is_configured():
             data_bytes = SupabaseStorageClient.download_bytes(object_key)
             if data_bytes is not None:

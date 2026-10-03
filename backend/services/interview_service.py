@@ -1,9 +1,10 @@
 import os
 import json
 import logging
+import tempfile
 from datetime import datetime
 from backend.services.database import db
-from backend.models.interview import Interview, InterviewResponse
+from backend.models.interview import Interview, InterviewResponse, InterviewMedia
 from backend.models.resume import Resume
 from backend.models.report import Report
 from backend.config import Config
@@ -98,23 +99,84 @@ def process_question_response(interview_id, question_id, question_text, media_fi
         return None, "Interview session not found"
 
     client_metrics = client_metrics or {}
-    saved_path = None
-    if media_file and media_file.filename:
-        saved_path, _ = save_uploaded_file(media_file, Config.RECORDING_UPLOAD_FOLDER, Config.ALLOWED_RECORDING_EXTENSIONS)
+    media_record = None
+    media_url = None
+    media_bytes = None
+    orig_filename = None
+    ext = "webm"
 
-    # 1. Speech Recognition via Whisper
+    # Read media bytes into memory and save directly to Database InterviewMedia table
+    if media_file and getattr(media_file, "filename", None):
+        orig_filename = media_file.filename
+        ext = orig_filename.rsplit(".", 1)[-1].lower() if "." in orig_filename else "webm"
+        media_bytes = media_file.read()
+        if media_bytes and len(media_bytes) > 0:
+            is_video = ext in ["mp4", "webm", "avi", "mov", "mkv"]
+            media_type = "video" if is_video else "audio"
+            mime_type = getattr(media_file, "content_type", None) or (
+                "video/webm" if ext == "webm" else "video/mp4" if ext == "mp4" else "audio/wav"
+            )
+            cid = interview.user.candidate_id if (interview.user and interview.user.candidate_id) else f"CID-2026-{interview.user_id}"
+
+            media_record = InterviewMedia(
+                candidate_id=cid,
+                user_id=interview.user_id,
+                interview_id=interview_id,
+                media_type=media_type,
+                file_name=orig_filename,
+                mime_type=mime_type,
+                file_size=len(media_bytes),
+                data=media_bytes
+            )
+            db.session.add(media_record)
+            db.session.flush()
+            media_url = f"/api/interview/media/{media_record.id}"
+
+    # 1. Speech Recognition via Whisper & CV Analysis (using short-lived in-memory/temp buffer with immediate cleanup)
     transcript = client_transcript.strip()
     duration_seconds = 15.0
     wpm = 115.0
     word_count = len(transcript.split()) if transcript else 0
-    
-    if saved_path and os.path.exists(saved_path):
-        whisper_res = transcribe_audio(saved_path, model_size=Config.WHISPER_MODEL_SIZE)
-        if whisper_res.get("text"):
-            transcript = whisper_res.get("text")
-            duration_seconds = whisper_res.get("duration_seconds", 15.0)
-            wpm = whisper_res.get("wpm", 115.0)
-            word_count = whisper_res.get("word_count", len(transcript.split()))
+    eye_contact_val = float(client_metrics.get("eye_contact_pct", 82.0))
+    head_stab_val = float(client_metrics.get("head_stability_pct", 84.0))
+
+    if media_bytes and len(media_bytes) > 0:
+        temp_media_path = None
+        try:
+            with tempfile.NamedTemporaryFile(delete=False, suffix=f".{ext}") as tmp:
+                tmp.write(media_bytes)
+                temp_media_path = tmp.name
+
+            # Run Whisper Speech-to-Text
+            try:
+                whisper_res = transcribe_audio(temp_media_path, model_size=Config.WHISPER_MODEL_SIZE)
+                if whisper_res.get("text"):
+                    transcript = whisper_res.get("text")
+                    duration_seconds = whisper_res.get("duration_seconds", 15.0)
+                    wpm = whisper_res.get("wpm", 115.0)
+                    word_count = whisper_res.get("word_count", len(transcript.split()))
+            except Exception as e:
+                logger.warning(f"Whisper processing notice: {e}")
+
+            # Run Computer Vision analysis if video format
+            is_video = ext in ["mp4", "webm", "avi", "mov", "mkv"]
+            if is_video:
+                try:
+                    vis = analyze_face_visibility_in_video(temp_media_path)
+                    eye = estimate_eye_contact_from_video(temp_media_path)
+                    head = estimate_head_pose_and_movement(temp_media_path)
+                    face_expr = analyze_facial_expression_and_engagement(temp_media_path)
+
+                    eye_contact_val = eye.get("eye_contact_percentage", 80.0)
+                    head_stab_val = head.get("head_stability_score", 82.0)
+                except Exception as e:
+                    logger.warning(f"CV Analysis notice: {e}")
+        finally:
+            if temp_media_path and os.path.exists(temp_media_path):
+                try:
+                    os.unlink(temp_media_path)
+                except Exception:
+                    pass
 
     if not transcript:
         transcript = "I utilized standard development methodologies, clean code architecture, and iterative testing to solve the problem."
@@ -140,33 +202,13 @@ def process_question_response(interview_id, question_id, question_text, media_fi
 
     nlp_analysis = analyze_response(transcript, question_text, benchmark_answer=benchmark_ans)
 
-    # 3. Computer Vision Analysis (Only on video formats)
-    is_video = saved_path and saved_path.lower().rsplit(".", 1)[-1] in ["mp4", "webm", "avi", "mov"]
-    if is_video and os.path.exists(saved_path):
-        try:
-            vis = analyze_face_visibility_in_video(saved_path)
-            eye = estimate_eye_contact_from_video(saved_path)
-            head = estimate_head_pose_and_movement(saved_path)
-            face_expr = analyze_facial_expression_and_engagement(saved_path)
-            
-            eye_contact_val = eye.get("eye_contact_percentage", 80.0)
-            head_stab_val = head.get("head_stability_score", 82.0)
-        except Exception as e:
-            print(f"[CV Analysis Error] {e}")
-            eye_contact_val = float(client_metrics.get("eye_contact_pct", 82.0))
-            head_stab_val = float(client_metrics.get("head_stability_pct", 84.0))
-    else:
-        # Utilize browser client-side real-time tracking metrics if available
-        eye_contact_val = float(client_metrics.get("eye_contact_pct", 82.0))
-        head_stab_val = float(client_metrics.get("head_stability_pct", 84.0))
-
-    # 4. Save question response to DB
+    # 3. Save question response to DB
     resp = InterviewResponse(
         interview_id=interview_id,
         question_id=int(question_id) if question_id else None,
         question_text=question_text,
-        video_path=saved_path,
-        audio_path=saved_path,
+        video_path=media_url,
+        audio_path=media_url,
         transcript=transcript,
         relevance_score=nlp_analysis.get("relevance_score", 75.0),
         technical_score=nlp_analysis.get("technical_score", 75.0),
@@ -176,24 +218,31 @@ def process_question_response(interview_id, question_id, question_text, media_fi
         head_stability_pct=head_stab_val
     )
     db.session.add(resp)
+    db.session.flush()
+
+    if media_record:
+        media_record.response_id = resp.id
+
+    interview.recording_path = f"/api/interview/{interview_id}/media"
+    interview.recording_url = f"/api/interview/{interview_id}/media"
     db.session.commit()
 
-    # 5. Cloudflare R2 Upload & PostgreSQL CandidateFile reference
-    if saved_path and os.path.exists(saved_path):
+    # 4. Storage sync directly from in-memory bytes if storage is configured
+    if media_bytes and len(media_bytes) > 0:
         cid = interview.user.candidate_id if interview.user else f"CID-2026-{interview.user_id}"
         q_idx = int(question_id) if question_id else len(interview.responses)
         try:
             StorageService.save_candidate_file(
                 candidate_id=cid,
                 file_type="interview_video",
-                file_input=saved_path,
-                filename=os.path.basename(saved_path),
+                file_input=media_bytes,
+                filename=orig_filename or f"response_{q_idx}.webm",
                 user_id=interview.user_id,
                 interview_id=interview_id,
                 index=q_idx
             )
         except Exception as e:
-            logger.warning(f"R2 storage sync notice for response recording: {e}")
+            logger.warning(f"Storage sync notice for response recording: {e}")
 
     return resp.to_dict(), None
 
@@ -240,18 +289,19 @@ def finalize_interview_and_generate_report(interview_id):
     # AI Scoring Engine
     scores = calculate_ai_assessment_scores(feat_vector, metrics_dict)
 
-    # Identify primary recorded video from responses
+    # Identify primary recorded media from database
+    primary_media = InterviewMedia.query.filter_by(interview_id=interview_id).order_by(InterviewMedia.id.desc()).first()
     primary_video_path = None
     primary_video_url = None
-    for r in responses:
-        if r.video_path:
-            clean_v = r.video_path.replace("\\", "/")
-            primary_video_path = clean_v
-            if "uploads/" in clean_v:
-                primary_video_url = "/" + clean_v[clean_v.find("uploads/"):]
-            else:
-                primary_video_url = f"/uploads/recordings/{os.path.basename(clean_v)}"
-            break
+    if primary_media:
+        primary_video_path = f"/api/interview/{interview_id}/media"
+        primary_video_url = f"/api/interview/{interview_id}/media"
+    else:
+        for r in responses:
+            if r.video_path:
+                primary_video_path = r.video_path
+                primary_video_url = r.video_path if r.video_path.startswith("/api/") else f"/api/interview/{interview_id}/media"
+                break
 
     # Update interview record
     interview.status = "completed"
@@ -299,19 +349,20 @@ def finalize_interview_and_generate_report(interview_id):
     db.session.add(existing_report)
     db.session.commit()
 
-    # Upload main session video to R2 under canonical {candidate_id}/interview/video/{candidate_id}.mp4
-    if primary_video_path and os.path.exists(primary_video_path):
+    # Upload main session video to storage from in-memory media if configured
+    if primary_media and primary_media.data:
         cid = user.candidate_id or f"CID-2026-{user.id}"
+        ext_suffix = "webm" if "webm" in (primary_media.mime_type or "") else "mp4"
         try:
             StorageService.save_candidate_file(
                 candidate_id=cid,
                 file_type="interview_video",
-                file_input=primary_video_path,
-                filename=f"{cid}.mp4",
+                file_input=primary_media.data,
+                filename=f"{cid}.{ext_suffix}",
                 user_id=user.id,
                 interview_id=interview_id
             )
         except Exception as e:
-            logger.warning(f"R2 storage sync notice for primary interview video: {e}")
+            logger.warning(f"Storage sync notice for primary interview video: {e}")
 
     return existing_report.to_dict(), None

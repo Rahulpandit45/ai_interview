@@ -342,6 +342,134 @@ def migrate_candidate_files_schema():
     except Exception as e:
         print(f"[Database Candidate Files Migration Warning] {e}")
 
+def migrate_interview_media_schema():
+    """
+    Ensures interview_media table exists for direct database audio/video storage.
+    Supports PostgreSQL (BYTEA), SQLite (BLOB), and MySQL (LONGBLOB).
+    Migrates any existing local recordings into the database to eliminate local storage.
+    """
+    from sqlalchemy import inspect
+    from backend.models.interview import InterviewMedia, Interview, InterviewResponse
+    from backend.models.report import Report
+    import os
+
+    try:
+        inspector = inspect(db.engine)
+        tables = inspector.get_table_names()
+        is_pg = "postgresql" in str(db.engine.url) or "postgres" in str(db.engine.url)
+        is_sqlite = "sqlite" in str(db.engine.url)
+
+        with db.engine.begin() as conn:
+            if "interview_media" not in tables:
+                print("[Database Migration] Creating 'interview_media' table for direct DB audio/video storage...")
+                if is_sqlite:
+                    conn.execute(text("""
+                        CREATE TABLE IF NOT EXISTS interview_media (
+                            id INTEGER PRIMARY KEY AUTOINCREMENT,
+                            candidate_id VARCHAR(50) NOT NULL,
+                            user_id INTEGER,
+                            interview_id INTEGER NOT NULL,
+                            response_id INTEGER,
+                            media_type VARCHAR(30) DEFAULT 'video',
+                            file_name VARCHAR(255) NOT NULL,
+                            mime_type VARCHAR(100) DEFAULT 'video/webm',
+                            file_size BIGINT DEFAULT 0,
+                            data BLOB NOT NULL,
+                            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+                            FOREIGN KEY(interview_id) REFERENCES interviews(id) ON DELETE CASCADE,
+                            FOREIGN KEY(response_id) REFERENCES interview_responses(id) ON DELETE CASCADE
+                        )
+                    """))
+                elif is_pg:
+                    conn.execute(text("""
+                        CREATE TABLE IF NOT EXISTS interview_media (
+                            id SERIAL PRIMARY KEY,
+                            candidate_id VARCHAR(50) NOT NULL,
+                            user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+                            interview_id INTEGER NOT NULL REFERENCES interviews(id) ON DELETE CASCADE,
+                            response_id INTEGER REFERENCES interview_responses(id) ON DELETE CASCADE,
+                            media_type VARCHAR(30) DEFAULT 'video',
+                            file_name VARCHAR(255) NOT NULL,
+                            mime_type VARCHAR(100) DEFAULT 'video/webm',
+                            file_size BIGINT DEFAULT 0,
+                            data BYTEA NOT NULL,
+                            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                        )
+                    """))
+                else:
+                    conn.execute(text("""
+                        CREATE TABLE IF NOT EXISTS interview_media (
+                            id INT AUTO_INCREMENT PRIMARY KEY,
+                            candidate_id VARCHAR(50) NOT NULL,
+                            user_id INT,
+                            interview_id INT NOT NULL,
+                            response_id INT,
+                            media_type VARCHAR(30) DEFAULT 'video',
+                            file_name VARCHAR(255) NOT NULL,
+                            mime_type VARCHAR(100) DEFAULT 'video/webm',
+                            file_size BIGINT DEFAULT 0,
+                            data LONGBLOB NOT NULL,
+                            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+                            FOREIGN KEY(interview_id) REFERENCES interviews(id) ON DELETE CASCADE,
+                            FOREIGN KEY(response_id) REFERENCES interview_responses(id) ON DELETE CASCADE
+                        )
+                    """))
+                try:
+                    conn.execute(text("CREATE INDEX IF NOT EXISTS ix_interview_media_cid ON interview_media (candidate_id)"))
+                    conn.execute(text("CREATE INDEX IF NOT EXISTS ix_interview_media_iid ON interview_media (interview_id)"))
+                    conn.execute(text("CREATE INDEX IF NOT EXISTS ix_interview_media_rid ON interview_media (response_id)"))
+                except Exception:
+                    pass
+
+        # Migrate existing local files from uploads/recordings into DB so nothing is lost
+        from backend.config import Config
+        rec_dir = Config.RECORDING_UPLOAD_FOLDER
+        if os.path.exists(rec_dir):
+            for fname in os.listdir(rec_dir):
+                fpath = os.path.join(rec_dir, fname)
+                if os.path.isfile(fpath) and os.path.getsize(fpath) > 0:
+                    try:
+                        ext = os.path.splitext(fname)[1].lower()
+                        mime = "video/webm" if "webm" in ext else ("video/mp4" if "mp4" in ext else "audio/wav")
+                        mtype = "video" if ext in [".webm", ".mp4", ".mov", ".avi"] else "audio"
+
+                        target_interview = None
+                        if fname.startswith("interview_"):
+                            parts = fname.split("_")
+                            if len(parts) >= 2 and parts[1].isdigit():
+                                target_interview = Interview.query.get(int(parts[1]))
+                        if not target_interview:
+                            target_interview = Interview.query.order_by(Interview.id.desc()).first()
+
+                        if target_interview:
+                            cid = target_interview.user.candidate_id if target_interview.user else f"CID-2026-{target_interview.user_id}"
+                            exists = InterviewMedia.query.filter_by(interview_id=target_interview.id, file_name=fname).first()
+                            if not exists:
+                                with open(fpath, "rb") as f:
+                                    bdata = f.read()
+                                media_rec = InterviewMedia(
+                                    candidate_id=cid,
+                                    user_id=target_interview.user_id,
+                                    interview_id=target_interview.id,
+                                    media_type=mtype,
+                                    file_name=fname,
+                                    mime_type=mime,
+                                    file_size=len(bdata),
+                                    data=bdata
+                                )
+                                db.session.add(media_rec)
+                                db.session.commit()
+                                target_interview.recording_url = f"/api/interview/{target_interview.id}/media"
+                                target_interview.recording_path = f"/api/interview/{target_interview.id}/media"
+                                db.session.commit()
+                                print(f"[Database Migration] Stored '{fname}' ({len(bdata)} bytes) in database.")
+                    except Exception as e:
+                        print(f"[Database Migration Notice] Could not migrate '{fname}': {e}")
+    except Exception as e:
+        print(f"[Database Interview Media Migration Warning] {e}")
+
 def init_db(app):
     """
     Initializes the database connection.
@@ -384,6 +512,7 @@ def init_db(app):
         migrate_proctoring_schema()
         migrate_otp_schema()
         migrate_candidate_files_schema()
+        migrate_interview_media_schema()
         # Seed initial standard interview questions
         from backend.models.question import seed_default_questions
         seed_default_questions()
