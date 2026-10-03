@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Account - AI Video Interview System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <script>(function(){try{var t=localStorage.getItem("ai_theme")||"dark";document.documentElement.setAttribute("data-theme",t);}catch(e){}})();</script>
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="container nav-container">
+      <a href="index.html" class="brand-logo">
+        <div class="brand-icon">⚡</div>
+        <span>AI Video <span class="gradient-text">Interview System</span></span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="index.html" class="nav-link">Home</a></li>
+        <li><a href="login.html" class="nav-link">Sign In</a></li>
+      </ul>
+      <div id="nav-user-slot" class="nav-user"></div>
+    </div>
+  </nav>
+
+  <div class="container" style="max-width: 500px; padding-top: 50px; padding-bottom: 60px;">
+    <div class="glass-card" id="registration-card">
+      
+      <!-- STEP 1: Registration Form -->
+      <div id="step-form-container" class="reg-step-container reg-step-active">
+        <div style="text-align: center; margin-bottom: 24px;">
+          <div style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 999px; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); color: #34d399; font-size: 0.8rem; font-weight: 700; margin-bottom: 12px; text-transform: uppercase;">
+            <span>👤</span> Candidate Portal Access
+          </div>
+          <h2 style="font-size: 1.8rem;">Candidate Registration</h2>
+          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 6px;">
+            Create your candidate account to take AI video interviews and receive your official Candidate ID.
+          </p>
+        </div>
+
+        <form id="register-form">
+          <input type="hidden" id="role" value="candidate">
+
+          <div class="input-group">
+            <label for="full_name">Full Name</label>
+            <input type="text" id="full_name" class="form-control" placeholder="Enter your full name" required>
+          </div>
+
+          <div class="input-group">
+            <label for="email">Email Address</label>
+            <input type="email" id="email" class="form-control" placeholder="name@example.com" required>
+          </div>
+
+          <div class="input-group">
+            <label for="password">Password</label>
+            <div class="password-input-wrap">
+              <input type="password" id="password" class="form-control" placeholder="Create a secure password" required autocomplete="new-password">
+              <button type="button" class="password-eye-btn" aria-label="Toggle password visibility" title="Show password">👁</button>
+            </div>
+            <div id="password-strength-wrap" class="password-strength-container">
+              <div class="password-strength-track">
+                <div class="password-strength-bar"></div>
+              </div>
+              <div class="password-strength-info">
+                <span class="password-strength-label">Strength: None</span>
+                <span>Min 8 characters</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="input-group">
+            <label for="target_role">Target Engineering Discipline</label>
+            <select id="target_role" class="form-control">
+              <option value="Software Engineer">Software Engineer</option>
+              <option value="AI/ML Engineer">AI/ML Engineer</option>
+              <option value="Full Stack Developer">Full Stack Developer</option>
+              <option value="Data Scientist">Data Scientist</option>
+            </select>
+          </div>
+
+          <div class="input-group" id="candidate-photo-group">
+            <label>Candidate Profile Photo <span style="color: var(--accent-cyan); font-size: 0.8rem;">(Live Camera Capture Required)</span></label>
+            <div class="photo-capture-box">
+              <div id="photo-instruction-banner" style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: var(--radius-sm); background: rgba(99,102,241,0.1); border: 1px solid rgba(99,102,241,0.25); color: #a5b4fc; font-size: 0.78rem; margin-bottom: 14px;">
+                🔒 Live camera capture only — file upload is disabled for identity verification
+              </div>
+
+              <div class="photo-preview-container">
+                <div id="photo-placeholder" class="photo-placeholder">👤</div>
+                <img id="photo-preview" class="photo-preview-img" style="display: none;" alt="Candidate Photo Preview">
+                <div id="photo-status-badge" class="photo-badge-indicator" style="display: none;" title="Camera Verified">✓</div>
+              </div>
+
+              <div class="photo-btn-group">
+                <button type="button" id="btn-open-camera" class="btn btn-primary btn-sm" style="display: inline-flex; align-items: center; gap: 6px;">
+                  📷 Open Camera &amp; Take Photo
+                </button>
+                <button type="button" id="btn-clear-photo" class="btn btn-outline btn-sm" style="display: none; color: var(--accent-rose); border-color: rgba(244,63,94,0.3);">
+                  ✕ Retake Photo
+                </button>
+              </div>
+              
+              <div id="photo-status-text" style="font-size: 0.82rem; color: var(--text-muted); margin-top: 10px;">
+                Click "Open Camera &amp; Take Photo" to capture your live portrait for official Candidate ID generation.
+              </div>
+            </div>
+          </div>
+
+          <button type="submit" id="btn-register-submit" class="btn btn-primary" style="width: 100%; margin-top: 10px; padding: 13px;">
+            <span class="btn-spinner" id="send-otp-spinner" style="display: none;"></span>
+            <span id="send-otp-btn-text">Create Candidate Account 🚀</span>
+          </button>
+        </form>
+
+        <div style="text-align: center; margin-top: 24px; font-size: 0.9rem; color: var(--text-secondary);">
+          Already have an account? <a href="login.html?portal=candidate" style="color: #818cf8; font-weight: 600;">Sign In</a>
+        </div>
+
+        <div style="text-align: center; margin-top: 14px; font-size: 0.8rem; color: var(--text-muted); border-top: 1px solid var(--border-color); padding-top: 14px;">
+          🔒 <strong>Looking for Administrator Access?</strong> Admin accounts are created &amp; provided by university or company administration. Public administrator registration is prohibited.
+        </div>
+      </div>
+
+      <!-- STEP 2: Modern Animated OTP Verification Screen -->
+      <div id="step-otp-container" class="reg-step-container reg-step-hidden">
+        <div class="otp-verification-card">
+          <!-- Animated Floating Email Icon -->
+          <div class="otp-icon-wrap">
+            <div class="otp-icon-circle">
+              <svg class="otp-envelope-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+                <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
+              </svg>
+            </div>
+          </div>
+
+          <h2 class="otp-title">Check Your Email</h2>
+          <p class="otp-subtext">
+            We sent a verification link to<br>
+            <span id="otp-display-email" class="otp-highlight-email">candidate@example.com</span>
+          </p>
+
+          <!-- Instructions Card -->
+          <div style="background: rgba(99, 102, 241, 0.08); border: 1px solid rgba(99, 102, 241, 0.25); border-radius: 12px; padding: 18px 20px; margin: 16px 0 16px; text-align: center;">
+            <div style="font-size: 1.6rem; margin-bottom: 6px;">📬</div>
+            <div style="font-weight: 700; color: #f8fafc; font-size: 0.98rem; margin-bottom: 4px;">
+              Click the link in your email to verify
+            </div>
+            <p style="color: #94a3b8; font-size: 0.85rem; line-height: 1.5; margin: 0;">
+              Open the verification email and click <strong>"Verify Email Address"</strong>. This window will automatically finish registration as soon as you verify!
+            </p>
+          </div>
+
+          <!-- Real-time Polling / Listening Status Animation -->
+          <div style="display: flex; align-items: center; justify-content: center; gap: 10px; padding: 10px 16px; background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 8px; margin-bottom: 16px;">
+            <div style="width: 14px; height: 14px; border: 2px solid rgba(16, 185, 129, 0.3); border-top-color: #34d399; border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
+            <span style="font-size: 0.84rem; color: #34d399; font-weight: 600;">
+              Waiting for link verification...
+            </span>
+          </div>
+
+          <!-- Dev Mode Instant Link (Displayed when running locally) -->
+          <div id="dev-link-container" style="display: none; margin: 0 0 16px; text-align: center;">
+            <a id="dev-link-anchor" href="#" target="_blank" class="btn btn-secondary" style="display: inline-block; width: 100%; text-decoration: none; padding: 11px 14px; font-size: 0.88rem; background: rgba(99, 102, 241, 0.22); border: 1.5px solid #6366f1; color: #c7d2fe; font-weight: 600; border-radius: 8px;">
+              🔗 Click to Open Verification Link &rarr;
+            </a>
+          </div>
+
+          <!-- Error notification banner -->
+          <div id="otp-error-banner" class="otp-error-banner"></div>
+
+          <!-- Countdown Timer -->
+          <div class="otp-timer-wrap" id="otp-timer-wrap">
+            <span>⏱️</span>
+            <span class="otp-timer-text">Link expires in <strong id="otp-timer-count">15:00</strong></span>
+          </div>
+
+          <div class="otp-expired-msg" id="otp-expired-msg" style="display: none;">
+            <div style="font-weight: 700; color: var(--accent-amber); font-size: 0.95rem;">Link Expired</div>
+            <p style="font-size: 0.84rem; color: var(--text-secondary); margin: 4px 0 0;">Your verification link has expired. Please click Resend Link.</p>
+          </div>
+
+          <!-- Resend Link -->
+          <div class="otp-resend-row">
+            <span style="color: var(--text-muted); font-size: 0.88rem;">Didn't receive the email?</span>
+            <button type="button" id="btn-resend-otp" class="otp-resend-btn">Resend Link</button>
+            <span id="resend-cooldown-text" style="display: none; font-size: 0.82rem; color: var(--text-muted);"></span>
+          </div>
+
+          <!-- Back / Edit Details -->
+          <div style="text-align: center; margin-top: 18px; border-top: 1px solid var(--border-color); padding-top: 14px;">
+            <button type="button" id="btn-back-to-form" class="btn-text-link">← Edit Details or Change Email</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 3: Email Verified Success Animation Screen -->
+      <div id="step-success-container" class="reg-step-container reg-step-hidden">
+        <div class="otp-success-card">
+          <div class="otp-success-check-circle">
+            <svg viewBox="0 0 52 52" class="checkmark-svg">
+              <circle class="checkmark-circle" cx="26" cy="26" r="25" fill="none"/>
+              <path class="checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+            </svg>
+          </div>
+          <h3 style="font-size: 1.5rem; color: var(--text-primary); margin: 8px 0 4px; font-family: var(--font-display);">Email Verified ✓</h3>
+          <p style="color: var(--text-secondary); font-size: 0.92rem;">
+            Your email has been successfully verified. Generating official Candidate ID...
+          </p>
+          <div style="margin-top: 18px;">
+            <span class="btn-spinner" style="width: 22px; height: 22px; border-color: rgba(99,102,241,0.3); border-top-color: #818cf8;"></span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- Webcam Capture Modal -->
+  <div id="webcam-modal" class="webcam-modal-backdrop">
+    <div class="webcam-modal-box">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <h3 style="font-size: 1.25rem; font-weight: 700;">Live Camera Photo Capture</h3>
+          <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 2px;">Align your face within the frame guide and click the shutter button</p>
+        </div>
+        <button type="button" id="btn-close-webcam" class="btn btn-outline btn-sm" style="padding: 4px 10px; font-size: 1.1rem;" aria-label="Close Camera">&times;</button>
+      </div>
+
+      <div class="webcam-viewport">
+        <video id="webcam-video" autoplay playsinline></video>
+        <div id="webcam-guide-overlay" class="webcam-guide-overlay">
+          <div class="webcam-guide-oval">
+            <span style="position: absolute; bottom: -24px; left: 50%; transform: translateX(-50%); white-space: nowrap; font-size: 0.75rem; color: #a5b4fc; font-weight: 600; text-shadow: 0 1px 4px #000;">
+              Align Face Here
+            </span>
+          </div>
+        </div>
+        <img id="webcam-captured-preview" style="width: 100%; height: 100%; object-fit: cover; display: none;" alt="Captured Frame">
+        <canvas id="webcam-canvas"></canvas>
+        <div id="webcam-flash" class="webcam-flash"></div>
+      </div>
+
+      <!-- Live Stream Controls -->
+      <div id="webcam-live-controls" class="webcam-controls" style="flex-direction: column; align-items: center; gap: 6px;">
+        <button type="button" id="btn-shutter" class="shutter-btn" title="Capture Photo">📸</button>
+        <span style="font-size: 0.8rem; color: var(--text-muted);">Click shutter to snap photo</span>
+      </div>
+
+      <!-- Post-Capture Controls -->
+      <div id="webcam-confirm-controls" class="photo-btn-group" style="display: none; margin-top: 12px;">
+        <button type="button" id="btn-retake-photo" class="btn btn-outline">🔄 Retake</button>
+        <button type="button" id="btn-use-photo" class="btn btn-primary">✓ Confirm &amp; Use This Photo</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Registration Success / Candidate ID Issuance Modal -->
+  <div id="success-id-modal" class="webcam-modal-backdrop">
+    <div class="webcam-modal-box" style="text-align: center; max-width: 480px;">
+      <div style="font-size: 3rem; margin-bottom: 8px;">🎉</div>
+      <h2 style="font-size: 1.6rem; font-family: var(--font-display);">Account Created Successfully!</h2>
+      <p style="color: var(--text-secondary); font-size: 0.92rem; margin-top: 6px;">
+        Your candidate profile is registered and your permanent identification has been issued.
+      </p>
+
+      <div class="candidate-id-success-card">
+        <div style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; letter-spacing: 1px;">Official Candidate ID</div>
+        <div style="display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 8px;">
+          <span id="issued-candidate-id" style="font-size: 1.6rem; font-weight: 800; color: #a5b4fc; font-family: var(--font-display);">CID-XXXX-XXXXXX</span>
+          <button type="button" id="btn-modal-copy-id" class="btn btn-outline btn-sm" style="padding: 4px 8px;" title="Copy ID">📋 Copy</button>
+        </div>
+        <div style="font-size: 0.82rem; color: var(--text-secondary); margin-top: 8px;">
+          Keep this ID for your interview assessment reports and verification.
+        </div>
+      </div>
+
+      <div style="margin-top: 18px; display: flex; gap: 10px; justify-content: center;">
+        <button type="button" id="btn-proceed-dashboard" class="btn btn-primary" style="width: 100%;">Proceed to Candidate Workspace 🚀</button>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer" style="margin-top: 50px; text-align: center; border-top: 1px solid var(--border-color); padding: 24px 0;">
+    <div class="container">
+      <p style="font-size: 0.9rem; color: var(--text-secondary); font-weight: 600;">
+        AI Interview System &bull; Final Year Computer Engineering Project
+      </p>
+      <p style="font-size: 0.82rem; color: var(--text-muted); margin-top: 4px;">
+        Department of Computer Engineering &bull; Mid-West University, Surkhet, Nepal
+      </p>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script src="js/auth.js"></script>
+</body>
+</html>

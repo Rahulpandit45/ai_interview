@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IT Q&amp;A Knowledge Engine - AI Interview Assessment System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <script>(function(){try{var t=localStorage.getItem("ai_theme")||"dark";document.documentElement.setAttribute("data-theme",t);}catch(e){}})();</script>
+  <style>
+    .qa-container {
+      max-width: 900px;
+      margin: 40px auto;
+      padding: 0 20px;
+    }
+    .qa-hero {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .qa-hero h1 {
+      font-family: var(--font-display);
+      font-size: 2.4rem;
+      background: linear-gradient(135deg, #fff 30%, #818cf8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 10px;
+    }
+    .qa-badge {
+      display: inline-block;
+      padding: 4px 14px;
+      background: rgba(99, 102, 241, 0.15);
+      border: 1px solid rgba(99, 102, 241, 0.35);
+      border-radius: var(--radius-full);
+      color: #818cf8;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 14px;
+    }
+    .qa-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 30px;
+      backdrop-filter: blur(16px);
+      box-shadow: var(--shadow-md);
+      margin-bottom: 25px;
+    }
+    .qa-input-group {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+    .qa-input {
+      flex: 1;
+      padding: 14px 18px;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      color: var(--text-primary);
+      font-size: 1.05rem;
+      outline: none;
+      transition: var(--transition);
+    }
+    .qa-input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px var(--primary-glow);
+    }
+    .qa-btn {
+      padding: 14px 28px;
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-md);
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .qa-btn:hover {
+      background: var(--primary-hover);
+      box-shadow: 0 4px 14px var(--primary-glow);
+      transform: translateY(-1px);
+    }
+    .chips-label {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+    .chips-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+    .chip {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-full);
+      padding: 6px 14px;
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .chip:hover {
+      background: rgba(99, 102, 241, 0.2);
+      border-color: var(--primary);
+      color: #fff;
+    }
+    .response-card {
+      display: none;
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      border-radius: var(--radius-md);
+      padding: 20px;
+      margin-top: 20px;
+      animation: fadeIn 0.3s ease;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .response-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .response-title {
+      font-weight: 600;
+      color: #818cf8;
+      font-size: 0.95rem;
+    }
+    .response-time {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+    .response-q {
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 10px;
+      font-size: 1.1rem;
+    }
+    .response-a {
+      color: #e2e8f0;
+      line-height: 1.6;
+      font-size: 1rem;
+    }
+    .action-links {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin-top: 30px;
+      flex-wrap: wrap;
+    }
+    .link-btn {
+      padding: 10px 20px;
+      border-radius: var(--radius-md);
+      font-size: 0.9rem;
+      font-weight: 500;
+      text-decoration: none;
+      transition: var(--transition);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .link-btn-secondary {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+    }
+    .link-btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.12);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="container nav-container">
+      <a href="index.html" class="brand-logo">
+        <div class="brand-icon">🎓</div>
+        <span>AI Interview <span class="gradient-text">Knowledge Engine</span></span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="index.html" class="nav-link">Home</a></li>
+        <li><a href="dashboard.html" class="nav-link">Dashboard</a></li>
+        <li><a href="interview.html" class="nav-link">Interview Room</a></li>
+        <li><a href="qa_test.html" class="nav-link active">Q&amp;A Engine</a></li>
+      </ul>
+      <div id="nav-user-slot" class="nav-user"></div>
+    </div>
+  </nav>
+
+  <div class="qa-container">
+    <div class="qa-hero">
+      <div class="qa-badge">Mid-West University &bull; Final Year Project</div>
+      <h1>IT Technical Q&amp;A Engine</h1>
+      <p style="color: var(--text-secondary); max-width: 650px; margin: 0 auto;">
+        Interactive test interface for the fine-tuned IT Question &amp; Answer model covering 500+ beginner questions across 21 technical domains.
+      </p>
+    </div>
+
+    <div class="qa-card">
+      <div class="qa-input-group">
+        <input type="text" id="qaInput" class="qa-input" placeholder="Ask any IT question (e.g. What is Python?, What is an API?)..." value="What is Python?">
+        <button id="askBtn" class="qa-btn" onclick="submitQuestion()">
+          <span>Ask AI</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </button>
+      </div>
+
+      <div class="chips-label">Try asking these sample questions:</div>
+      <div class="chips-row">
+        <span class="chip" onclick="setQuestion('What is Python?')">What is Python?</span>
+        <span class="chip" onclick="setQuestion('Can you explain what Python is?')">Can you explain what Python is?</span>
+        <span class="chip" onclick="setQuestion('What is an operating system in simple terms?')">Operating System</span>
+        <span class="chip" onclick="setQuestion('What is SQL?')">What is SQL?</span>
+        <span class="chip" onclick="setQuestion('What is Flutter?')">What is Flutter?</span>
+        <span class="chip" onclick="setQuestion('What is Docker?')">What is Docker?</span>
+        <span class="chip" onclick="setQuestion('What is the difference between a process and a thread?')">Process vs Thread</span>
+        <span class="chip" onclick="setQuestion('What is the Internet of Things (IoT)?')">What is IoT?</span>
+        <span class="chip" onclick="setQuestion('What is Firebase Authentication?')">Firebase Auth</span>
+        <span class="chip" onclick="setQuestion('How does the TCP three-way handshake work?')">TCP Handshake</span>
+      </div>
+
+      <div id="responseCard" class="response-card">
+        <div class="response-header">
+          <span class="response-title">&#10004; AI Interview Answer</span>
+          <span id="responseTime" class="response-time"></span>
+        </div>
+        <div id="responseQuestion" class="response-q"></div>
+        <div id="responseAnswer" class="response-a"></div>
+      </div>
+    </div>
+
+    <div class="action-links">
+      <a href="http://localhost:8000/docs" target="_blank" class="link-btn link-btn-secondary">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        FastAPI Swagger Docs (/docs)
+      </a>
+      <a href="/IT_Simple_Questions_Answers.pdf" target="_blank" class="link-btn link-btn-secondary">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        View PDF Document (105 Pages)
+      </a>
+      <a href="/index.html" class="link-btn link-btn-secondary">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        Interview Platform Home
+      </a>
+    </div>
+  </div>
+
+  <script>
+    function setQuestion(text) {
+      document.getElementById('qaInput').value = text;
+      submitQuestion();
+    }
+
+    async function submitQuestion() {
+      const input = document.getElementById('qaInput');
+      const question = input.value.trim();
+      if (!question) return;
+
+      const card = document.getElementById('responseCard');
+      const qElem = document.getElementById('responseQuestion');
+      const aElem = document.getElementById('responseAnswer');
+      const timeElem = document.getElementById('responseTime');
+
+      card.style.display = 'block';
+      qElem.textContent = question;
+      aElem.innerHTML = '<span style="color: #94a3b8;">Generating answer...</span>';
+      timeElem.textContent = '';
+
+      const startTime = performance.now();
+      try {
+        // Try FastAPI port 8000 first, fallback to current origin (Flask port 5000)
+        let apiUrl = 'http://localhost:8000/api/qa/ask';
+        let res;
+        try {
+          res = await fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ question: question })
+          });
+        } catch (e) {
+          // Fallback to relative endpoint on current server
+          apiUrl = '/api/qa/ask';
+          res = await fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ question: question })
+          });
+        }
+
+        const elapsed = Math.round(performance.now() - startTime);
+        const data = await res.json();
+
+        if (res.ok && data.answer) {
+          aElem.textContent = data.answer;
+          timeElem.textContent = `Latency: ${elapsed}ms | Endpoint: ${apiUrl}`;
+        } else {
+          aElem.textContent = data.error || data.detail || 'Could not retrieve answer.';
+        }
+      } catch (err) {
+        aElem.textContent = 'Error connecting to QA API server. Ensure server is running.';
+      }
+    }
+
+    document.getElementById('qaInput').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') submitQuestion();
+    });
+
+    // Auto submit default question on load
+    window.addEventListener('DOMContentLoaded', () => {
+      submitQuestion();
+    });
+  </script>
+  <footer class="footer" style="margin-top: 50px; text-align: center; border-top: 1px solid var(--border-color); padding: 24px 0;">
+    <div class="container">
+      <p style="font-size: 0.9rem; color: var(--text-secondary); font-weight: 600;">
+        AI Interview System &bull; Final Year Computer Engineering Project
+      </p>
+      <p style="font-size: 0.82rem; color: var(--text-muted); margin-top: 4px;">
+        Department of Computer Engineering &bull; Mid-West University, Surkhet, Nepal
+      </p>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+</body>
+</html>

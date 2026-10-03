@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Assessment Report - AI Video Interview System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <script>(function(){try{var t=localStorage.getItem("ai_theme")||"dark";document.documentElement.setAttribute("data-theme",t);}catch(e){}})();</script>
+  <style>
+    .score-card-grid {
+      display: grid;
+      grid-template-columns: 340px 1fr 340px;
+      gap: 24px;
+    }
+    @media (max-width: 1100px) {
+      .score-card-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .ai-badge-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    .ai-badge-box {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="container nav-container">
+      <a href="index.html" class="brand-logo">
+        <div class="brand-icon">⚡</div>
+        <span>AI Video <span class="gradient-text">Assessment Report</span></span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="dashboard.html" class="nav-link">Dashboard</a></li>
+        <li><a href="interview.html" class="nav-link">New Interview</a></li>
+      </ul>
+      <div id="nav-user-slot" class="nav-user"></div>
+    </div>
+  </nav>
+
+  <div class="container" style="padding-top: 36px; padding-bottom: 80px;">
+    
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px; flex-wrap: wrap; gap: 16px;">
+      <div>
+        <span class="badge-role" style="background: rgba(16, 185, 129, 0.15); color: #34d399; margin-bottom: 8px; display: inline-block;">Official AI Evaluation</span>
+        <h1 style="font-size: 2.2rem;">Interview Assessment <span class="gradient-text">Report</span></h1>
+      </div>
+      <div style="display: flex; gap: 12px;">
+        <button class="btn btn-secondary" onclick="window.print()">🖨️ Print / Save PDF</button>
+        <a href="dashboard.html" id="btn-back-dashboard" class="btn btn-primary">Back to Dashboard</a>
+      </div>
+    </div>
+
+    <!-- Main Report Grid (Matching Proposal Expected Output Slide 11) -->
+    <div class="score-card-grid" style="margin-bottom: 32px;">
+      
+      <!-- Column 1: Candidate Information & Media Summary -->
+      <div style="display: flex; flex-direction: column; gap: 20px;">
+        
+        <!-- Candidate Information Card -->
+        <div class="glass-card">
+          <h3 class="section-title" style="font-size: 1.15rem; margin-bottom: 16px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+            Candidate Information
+          </h3>
+          <div style="font-size: 0.92rem; display: flex; flex-direction: column; gap: 12px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span style="color: var(--text-muted);">Candidate ID:</span>
+              <span id="rep-candidate-id" class="badge-role" style="background: rgba(99, 102, 241, 0.15); color: #a5b4fc; font-weight: 700; font-family: var(--font-display);">--</span>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+              <span style="color: var(--text-muted);">Name:</span>
+              <strong id="rep-name" style="color: var(--text-primary);">--</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+              <span style="color: var(--text-muted);">Position:</span>
+              <strong id="rep-position" style="color: var(--text-primary);">Software Engineer</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+              <span style="color: var(--text-muted);">Interview Date:</span>
+              <span id="rep-date" style="color: var(--text-secondary);">--</span>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+              <span style="color: var(--text-muted);">Interview Type:</span>
+              <span id="rep-type" style="color: var(--text-secondary);">Technical & Behavioral</span>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+              <span style="color: var(--text-muted);">Duration:</span>
+              <span id="rep-duration" style="color: var(--text-secondary);">--:--</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Candidate Biometric Telemetry & Audio/Video Log Card -->
+        <div class="glass-card" style="text-align: center; padding: 20px;">
+          <div style="position: relative; width: 100%; min-height: 180px; max-height: 240px; background: #000; border-radius: var(--radius-md); overflow: hidden; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border-color);">
+            <div id="rep-photo-placeholder" style="font-size: 3.5rem;">👤</div>
+            <img id="rep-photo" style="width: 100%; height: 100%; object-fit: cover; display: none;" alt="Candidate Photo">
+            <video id="rep-recorded-video" controls playsinline preload="metadata" style="width: 100%; height: 100%; min-height: 180px; max-height: 240px; object-fit: contain; background: #000; display: none;"></video>
+            <div style="position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.75); padding: 4px 10px; border-radius: 999px; font-size: 0.75rem; color: #10b981; font-weight: 700; display: flex; align-items: center; gap: 6px; z-index: 5; pointer-events: none;">
+              <span style="width: 8px; height: 8px; background: #10b981; border-radius: 50%; box-shadow: 0 0 8px #10b981;"></span>
+              <span>VERIFIED SESSION</span>
+            </div>
+          </div>
+          <div id="rep-video-clips" style="display: none; margin-top: 12px; gap: 6px; flex-wrap: wrap; justify-content: center;"></div>
+          <div style="font-size: 0.82rem; font-weight: 600; color: var(--text-primary); margin-top: 12px;">
+            Candidate Biometric Telemetry &amp; Audio/Video Log
+          </div>
+          <div id="rep-video-status-text" style="font-size: 0.78rem; color: var(--text-muted); margin-top: 4px;">
+            Webcam response recording archived &amp; persisted in database.
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Column 2: Overall Score Gauge & Section-wise Breakdown -->
+      <div class="glass-card">
+        <h3 class="section-title" style="font-size: 1.15rem; margin-bottom: 20px; text-align: center;">
+          Overall AI Assessment Score
+        </h3>
+
+        <!-- Radial Gauge -->
+        <div class="radial-gauge-container">
+          <svg class="radial-gauge-svg" viewBox="0 0 120 120">
+            <defs>
+              <linearGradient id="scoreGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#10b981" />
+                <stop offset="100%" stop-color="#06b6d4" />
+              </linearGradient>
+            </defs>
+            <circle class="radial-gauge-bg" cx="60" cy="60" r="50"></circle>
+            <circle id="gauge-circle" class="radial-gauge-progress" cx="60" cy="60" r="50" stroke-dasharray="314.15" stroke-dashoffset="60"></circle>
+          </svg>
+          <div class="radial-gauge-text">
+            <div id="rep-overall-val" class="radial-gauge-val" style="color: var(--accent-emerald);">82%</div>
+            <div id="rep-overall-grade" class="radial-gauge-label">Good</div>
+          </div>
+        </div>
+
+        <!-- Section-wise Scores (Progress Bars) -->
+        <div style="margin-top: 36px;">
+          
+          <div class="progress-container">
+            <div class="progress-header">
+              <span>Communication Skills</span>
+              <strong id="bar-val-comm">85%</strong>
+            </div>
+            <div class="progress-bar-bg">
+              <div id="bar-fill-comm" class="progress-bar-fill fill-emerald" style="width: 85%;"></div>
+            </div>
+          </div>
+
+          <div class="progress-container">
+            <div class="progress-header">
+              <span>Technical Knowledge</span>
+              <strong id="bar-val-tech">80%</strong>
+            </div>
+            <div class="progress-bar-bg">
+              <div id="bar-fill-tech" class="progress-bar-fill fill-primary" style="width: 80%;"></div>
+            </div>
+          </div>
+
+          <div class="progress-container">
+            <div class="progress-header">
+              <span>Problem Solving & Depth</span>
+              <strong id="bar-val-prob">78%</strong>
+            </div>
+            <div class="progress-bar-bg">
+              <div id="bar-fill-prob" class="progress-bar-fill fill-amber" style="width: 78%;"></div>
+            </div>
+          </div>
+
+          <div class="progress-container">
+            <div class="progress-header">
+              <span>Confidence & Pacing</span>
+              <strong id="bar-val-conf">83%</strong>
+            </div>
+            <div class="progress-bar-bg">
+              <div id="bar-fill-conf" class="progress-bar-fill fill-cyan" style="width: 83%;"></div>
+            </div>
+          </div>
+
+          <div class="progress-container">
+            <div class="progress-header">
+              <span>Eye Contact & Visual Focus</span>
+              <strong id="bar-val-eye">81%</strong>
+            </div>
+            <div class="progress-bar-bg">
+              <div id="bar-fill-eye" class="progress-bar-fill fill-emerald" style="width: 81%;"></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Column 3: AI Analysis & Behavioral Badges -->
+      <div style="display: flex; flex-direction: column; gap: 20px;">
+        
+        <div class="glass-card">
+          <h3 class="section-title" style="font-size: 1.15rem; margin-bottom: 16px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+            AI Behavioral Analysis
+          </h3>
+          
+          <div class="ai-badge-grid">
+            <div class="ai-badge-box">
+              <div style="font-size: 1.6rem; margin-bottom: 4px;">😊</div>
+              <div style="font-size: 0.78rem; color: var(--text-muted); text-transform: uppercase;">Facial Expression</div>
+              <div id="badge-expr" style="font-weight: 700; color: #34d399; margin-top: 2px;">Positive</div>
+            </div>
+
+            <div class="ai-badge-box">
+              <div style="font-size: 1.6rem; margin-bottom: 4px;">👁️</div>
+              <div style="font-size: 0.78rem; color: var(--text-muted); text-transform: uppercase;">Eye Contact</div>
+              <div id="badge-eye" style="font-weight: 700; color: #38bdf8; margin-top: 2px;">Good</div>
+            </div>
+
+            <div class="ai-badge-box">
+              <div style="font-size: 1.6rem; margin-bottom: 4px;">🎙️</div>
+              <div style="font-size: 0.78rem; color: var(--text-muted); text-transform: uppercase;">Speech Analysis</div>
+              <div id="badge-speech" style="font-weight: 700; color: #a5b4fc; margin-top: 2px;">Clear</div>
+            </div>
+
+            <div class="ai-badge-box">
+              <div style="font-size: 1.6rem; margin-bottom: 4px;">✨</div>
+              <div style="font-size: 0.78rem; color: var(--text-muted); text-transform: uppercase;">Sentiment</div>
+              <div id="badge-sentiment" style="font-weight: 700; color: #fbbf24; margin-top: 2px;">Positive</div>
+            </div>
+          </div>
+
+          <div style="margin-top: 20px; font-size: 0.82rem; color: var(--text-muted); line-height: 1.5;">
+            Visual telemetry measured via MediaPipe 3D face mesh. Auditory signals processed via Whisper acoustic modeling.
+          </div>
+        </div>
+
+        <div class="glass-card">
+          <div style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Speech Pacing</div>
+          <div style="font-size: 2rem; font-weight: 800; color: #fff; margin-top: 6px;">
+            <span id="rep-wpm">120</span> <span style="font-size: 0.95rem; font-weight: 500; color: var(--text-secondary);">WPM (Words Per Minute)</span>
+          </div>
+          <div style="font-size: 0.82rem; color: var(--accent-emerald); margin-top: 4px;">Natural conversational cadence</div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Section 5: Feedback & Summary (Strengths & Areas for Improvement) -->
+    <div class="grid-2">
+      <!-- Strengths -->
+      <div class="glass-card" style="border-left: 4px solid var(--accent-emerald);">
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px;">
+          <span style="font-size: 1.5rem;">👍</span>
+          <h3 class="section-title" style="font-size: 1.25rem;">Key Strengths</h3>
+        </div>
+        <ul id="rep-strengths-list" style="list-style: none; display: flex; flex-direction: column; gap: 10px; font-size: 0.95rem;">
+          <li>✓ Good technical knowledge and domain vocabulary.</li>
+          <li>✓ Clear verbal communication and articulation.</li>
+          <li>✓ Confident posture and positive attitude throughout the session.</li>
+        </ul>
+      </div>
+
+      <!-- Areas for Improvement -->
+      <div class="glass-card" style="border-left: 4px solid var(--accent-amber);">
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px;">
+          <span style="font-size: 1.5rem;">📈</span>
+          <h3 class="section-title" style="font-size: 1.25rem;">Areas for Improvement</h3>
+        </div>
+        <ul id="rep-weaknesses-list" style="list-style: none; display: flex; flex-direction: column; gap: 10px; font-size: 0.95rem;">
+          <li>• Provide more structured answers using the STAR format for behavioral scenarios.</li>
+          <li>• Deepen architectural edge case descriptions with quantitative trade-offs.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Personalized Summary Text -->
+    <div class="glass-card" style="margin-top: 24px;">
+      <h3 class="section-title" style="font-size: 1.15rem; margin-bottom: 10px;">Personalized AI Feedback</h3>
+      <p id="rep-feedback-text" style="color: var(--text-secondary); font-size: 0.95rem; line-height: 1.6;">
+        Candidate delivered a good overall interview performance (82/100). Demonstrated clear communication and positive camera engagement.
+      </p>
+    </div>
+
+  </div>
+
+  <script src="js/main.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      requireAuth();
+      const urlParams = new URLSearchParams(window.location.search);
+      const interviewId = urlParams.get("interview_id");
+
+      if (!interviewId) {
+        showToast("No interview ID specified", "error");
+        return;
+      }
+
+      try {
+        const res = await Api.request(`/api/reports/${interviewId}`);
+        const r = res.report;
+        const user = Api.getUser();
+        if (user && (user.role === "admin" || user.role === "recruiter")) {
+          const backBtn = document.getElementById("btn-back-dashboard");
+          if (backBtn) {
+            backBtn.href = "admin.html";
+            backBtn.textContent = "Back to Admin Console";
+          }
+        }
+
+        document.getElementById("rep-name").textContent = r.candidate_name;
+        document.getElementById("rep-position").textContent = r.target_role;
+        document.getElementById("rep-date").textContent = r.generated_at || "Recent";
+        
+        const repCidElem = document.getElementById("rep-candidate-id");
+        if (repCidElem) {
+          repCidElem.textContent = r.candidate_id || "CID-VERIFIED";
+        }
+
+        const repPhoto = document.getElementById("rep-photo");
+        const repPlaceholder = document.getElementById("rep-photo-placeholder");
+        const repVideo = document.getElementById("rep-recorded-video");
+        const repClipsContainer = document.getElementById("rep-video-clips");
+        const repStatusText = document.getElementById("rep-video-status-text");
+
+        // Collect all video recordings from responses or interview/report
+        const videoResponses = (r.responses || []).filter(item => Boolean(item.video_url || item.video_path));
+        const primaryVideoUrl = r.recording_url || (videoResponses.length > 0 ? videoResponses[0].video_url : null);
+
+        if (primaryVideoUrl && repVideo) {
+          repVideo.src = primaryVideoUrl;
+          repVideo.style.display = "block";
+          if (repPlaceholder) repPlaceholder.style.display = "none";
+          if (repPhoto) repPhoto.style.display = "none";
+          if (repStatusText) {
+            repStatusText.innerHTML = `Webcam recording stored in DB: <span style="color: var(--accent-cyan); font-family: monospace;">${r.recording_path || "uploads/recordings"}</span>`;
+          }
+
+          // Build question video clips selector if multiple clips exist
+          if (videoResponses.length > 0 && repClipsContainer) {
+            repClipsContainer.style.display = "flex";
+            repClipsContainer.innerHTML = "";
+            videoResponses.forEach((vr, idx) => {
+              const btn = document.createElement("button");
+              btn.className = "btn-secondary";
+              btn.style.cssText = "font-size: 0.75rem; padding: 4px 10px; border-radius: 999px; cursor: pointer; transition: all 0.2s;";
+              btn.textContent = `Q${vr.question_id || idx + 1} Clip`;
+              if (idx === 0) {
+                btn.style.borderColor = "var(--accent-cyan)";
+                btn.style.color = "var(--accent-cyan)";
+              }
+              btn.onclick = () => {
+                repVideo.src = vr.video_url;
+                repVideo.play().catch(() => {});
+                Array.from(repClipsContainer.children).forEach(b => {
+                  b.style.borderColor = "";
+                  b.style.color = "";
+                });
+                btn.style.borderColor = "var(--accent-cyan)";
+                btn.style.color = "var(--accent-cyan)";
+              };
+              repClipsContainer.appendChild(btn);
+            });
+          }
+        } else if (repPhoto && r.profile_photo_url) {
+          repPhoto.src = r.profile_photo_url;
+          repPhoto.style.display = "block";
+          if (repPlaceholder) repPlaceholder.style.display = "none";
+          if (repStatusText) repStatusText.textContent = "Audio & biometric telemetry archived in database.";
+        }
+        
+        // Duration
+        const durationSecs = r.detailed_metrics?.total_duration_seconds || 150;
+        const mins = Math.floor(durationSecs / 60);
+        const secs = Math.floor(durationSecs % 60);
+        document.getElementById("rep-duration").textContent = `${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
+
+        // Overall Score & Gauge
+        const score = Math.round(r.overall_score);
+        document.getElementById("rep-overall-val").textContent = `${score}%`;
+        const grade = score >= 88 ? "Outstanding" : (score >= 75 ? "Good" : (score >= 60 ? "Satisfactory" : "Needs Work"));
+        document.getElementById("rep-overall-grade").textContent = grade;
+
+        // SVG Radial Gauge offset: 314.15 is full circle circumference (2 * pi * 50)
+        const circle = document.getElementById("gauge-circle");
+        const offset = 314.15 - (314.15 * score / 100);
+        circle.style.strokeDashoffset = offset;
+
+        // Section-wise progress bars
+        setBar("comm", r.communication_score);
+        setBar("tech", r.technical_score);
+        setBar("prob", Math.round((r.technical_score + r.overall_score) / 2));
+        setBar("conf", r.confidence_score);
+        setBar("eye", r.eye_contact_pct);
+
+        // Speech WPM
+        if (r.speech_fluency_wpm) {
+          document.getElementById("rep-wpm").textContent = Math.round(r.speech_fluency_wpm);
+        }
+
+        // Strengths & Weaknesses lists
+        if (r.strengths && r.strengths.length > 0) {
+          let html = "";
+          r.strengths.forEach(s => html += `<li>✓ ${s}</li>`);
+          document.getElementById("rep-strengths-list").innerHTML = html;
+        }
+
+        if (r.weaknesses && r.weaknesses.length > 0) {
+          let html = "";
+          r.weaknesses.forEach(w => html += `<li>• ${w}</li>`);
+          document.getElementById("rep-weaknesses-list").innerHTML = html;
+        }
+
+        // Feedback summary
+        if (r.feedback) {
+          document.getElementById("rep-feedback-text").textContent = r.feedback;
+        }
+
+      } catch (err) {
+        showToast(err.message, "error");
+      }
+    });
+
+    function setBar(id, val) {
+      const rounded = Math.round(val || 75);
+      const valEl = document.getElementById(`bar-val-${id}`);
+      const fillEl = document.getElementById(`bar-fill-${id}`);
+      if (valEl) valEl.textContent = `${rounded}%`;
+      if (fillEl) fillEl.style.width = `${rounded}%`;
+    }
+  </script>
+
+  <footer class="footer" style="margin-top: 50px; text-align: center; border-top: 1px solid var(--border-color); padding: 24px 0;">
+    <div class="container">
+      <p style="font-size: 0.9rem; color: var(--text-secondary); font-weight: 600;">
+        AI Interview System &bull; Final Year Computer Engineering Project
+      </p>
+      <p style="font-size: 0.82rem; color: var(--text-muted); margin-top: 4px;">
+        Department of Computer Engineering &bull; Mid-West University, Surkhet, Nepal
+      </p>
+    </div>
+  </footer>
+</body>
+</html>

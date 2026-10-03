@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Database Viewer - AI Video Interview System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <script>(function(){try{var t=localStorage.getItem("ai_theme")||"dark";document.documentElement.setAttribute("data-theme",t);}catch(e){}})();</script>
+  <style>
+    .tab-btn {
+      padding: 10px 20px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      color: var(--text-secondary);
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .tab-btn.active {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
+    .table-container {
+      margin-top: 20px;
+      overflow-x: auto;
+      max-height: 520px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="container nav-container">
+      <a href="index.html" class="brand-logo">
+        <div class="brand-icon">⚡</div>
+        <span>Database Viewer (<span class="gradient-text">interview_db.sqlite</span>)</span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="dashboard.html" class="nav-link">Dashboard</a></li>
+        <li><a href="interview.html" class="nav-link">Interview Room</a></li>
+      </ul>
+      <div id="nav-user-slot" class="nav-user"></div>
+    </div>
+  </nav>
+
+  <div class="container" style="padding-top: 36px; padding-bottom: 60px;">
+    
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
+      <div>
+        <h1 style="font-size: 2rem;">SQLite Database Explorer</h1>
+        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">
+          Direct real-time view of all records stored inside <code>backend/interview_db.sqlite</code>
+        </p>
+      </div>
+      <button class="btn btn-secondary btn-sm" onclick="loadDbData()">🔄 Refresh Data</button>
+    </div>
+
+    <!-- Table Selector Tabs -->
+    <div id="tabs-container" style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px;">
+      <!-- Populated dynamically -->
+    </div>
+
+    <!-- Table Container Card -->
+    <div class="glass-card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <h3 id="current-table-title" style="font-size: 1.2rem;">Table Records</h3>
+        <span id="record-count" class="badge-role">0 rows</span>
+      </div>
+
+      <div class="table-container">
+        <table class="custom-table" id="db-table">
+          <thead id="db-thead"></thead>
+          <tbody id="db-tbody">
+            <tr><td style="padding: 24px; text-align: center; color: var(--text-muted);">Loading database records...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="js/main.js"></script>
+  <script>
+    let dbData = {};
+    let activeTable = "";
+
+    async function loadDbData() {
+      try {
+        const res = await Api.request("/api/admin/raw-db");
+        dbData = res.tables || {};
+        const tables = Object.keys(dbData);
+
+        const tabsContainer = document.getElementById("tabs-container");
+        tabsContainer.innerHTML = "";
+
+        if (tables.length === 0) {
+          document.getElementById("db-tbody").innerHTML = "<tr><td style='padding:24px;'>No tables found.</td></tr>";
+          return;
+        }
+
+        if (!activeTable || !tables.includes(activeTable)) {
+          activeTable = tables.includes("reports") ? "reports" : tables[0];
+        }
+
+        tables.forEach(t => {
+          const btn = document.createElement("button");
+          btn.className = `tab-btn ${t === activeTable ? "active" : ""}`;
+          btn.textContent = `${t} (${dbData[t].length})`;
+          btn.onclick = () => {
+            activeTable = t;
+            document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+            renderTable(t);
+          };
+          tabsContainer.appendChild(btn);
+        });
+
+        renderTable(activeTable);
+      } catch (err) {
+        document.getElementById("db-tbody").innerHTML = `<tr><td style="color:var(--accent-rose); padding:24px;">Failed to load database: ${err.message}</td></tr>`;
+      }
+    }
+
+    function renderTable(tableName) {
+      document.getElementById("current-table-title").textContent = `Table: ${tableName}`;
+      const rows = dbData[tableName] || [];
+      document.getElementById("record-count").textContent = `${rows.length} rows`;
+
+      const thead = document.getElementById("db-thead");
+      const tbody = document.getElementById("db-tbody");
+
+      if (rows.length === 0) {
+        thead.innerHTML = "";
+        tbody.innerHTML = "<tr><td style='padding:24px; text-align:center; color:var(--text-muted);'>Table is currently empty.</td></tr>";
+        return;
+      }
+
+      const columns = Object.keys(rows[0]);
+      thead.innerHTML = `<tr>${columns.map(c => `<th>${c}</th>`).join("")}</tr>`;
+
+      tbody.innerHTML = rows.map(row => {
+        return `<tr>${columns.map(c => {
+          let val = row[c];
+          if (typeof val === "object" && val !== null) {
+            val = JSON.stringify(val);
+          } else if (typeof val === "string" && val.length > 80) {
+            val = val.substring(0, 80) + "...";
+          }
+          return `<td>${val !== null && val !== undefined ? val : "<span style='color:var(--text-muted)'>NULL</span>"}</td>`;
+        }).join("")}</tr>`;
+      }).join("");
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const user = Api.getUser();
+      const token = Api.getToken();
+      if (!token) {
+        window.location.href = "login.html?portal=admin";
+        return;
+      }
+      if (!user || (user.role !== "admin" && user.role !== "recruiter")) {
+        showToast("Access Denied: Administrator privileges required.", "error");
+        setTimeout(() => {
+          window.location.href = "dashboard.html";
+        }, 1000);
+        return;
+      loadDbData();
+    });
+  </script>
+
+  <footer class="footer" style="margin-top: 50px; text-align: center; border-top: 1px solid var(--border-color); padding: 24px 0;">
+    <div class="container">
+      <p style="font-size: 0.9rem; color: var(--text-secondary); font-weight: 600;">
+        AI Interview System &bull; Final Year Computer Engineering Project
+      </p>
+      <p style="font-size: 0.82rem; color: var(--text-muted); margin-top: 4px;">
+        Department of Computer Engineering &bull; Mid-West University, Surkhet, Nepal
+      </p>
+    </div>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Candidate Assessment Dossier - AI Video Interview System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <script>(function(){try{var t=localStorage.getItem("ai_theme")||"dark";document.documentElement.setAttribute("data-theme",t);}catch(e){}})();</script>
+</head>
+<body>
+
+  <!-- Navigation (Hidden on Print) -->
+  <nav class="navbar no-print">
+    <div class="container nav-container">
+      <a href="index.html" class="brand-logo">
+        <div class="brand-icon">⚡</div>
+        <span>AI Video <span class="gradient-text">Interview System</span></span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="index.html" class="nav-link">Home</a></li>
+        <li><a href="admin.html" class="nav-link">Admin Console</a></li>
+        <li><a href="candidate_report.html" class="nav-link active">Candidate Dossier</a></li>
+        <li><a href="db_viewer.html" class="nav-link">Database Records</a></li>
+      </ul>
+      <div id="nav-user-slot" class="nav-user"></div>
+    </div>
+  </nav>
+
+  <div class="container" style="padding-top: 32px; padding-bottom: 80px;">
+
+    <!-- Official Print Header (Visible ONLY on Print) -->
+    <div class="print-header-official">
+      <div style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1.5px; color: #475569; font-weight: 700;">
+        Mid-West University &bull; Talent Assessment Platform
+      </div>
+      <h1 style="font-size: 1.6rem; margin: 6px 0; color: #0f172a; font-family: 'Outfit', sans-serif;">
+        OFFICIAL CANDIDATE ASSESSMENT REPORT &amp; INTERVIEW DOSSIER
+      </h1>
+      <div style="font-size: 0.85rem; color: #64748b; margin-top: 4px;" id="print-meta-header">
+        Confidential Assessment Document &bull; Generated for University/Company Administrative Records
+      </div>
+    </div>
+
+    <!-- Top Action Bar (Hidden on Print) -->
+    <div class="no-print" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
+      <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+        <a href="admin.html" class="btn btn-outline btn-sm">⬅️ Back to Admin Console</a>
+        <span class="badge-role" style="background: rgba(99, 102, 241, 0.2); color: #a5b4fc;" id="admin-badge-id">ADMIN ID: ADM-2026-001</span>
+        <span class="badge-role" style="background: rgba(16, 185, 129, 0.15); color: #34d399;" id="admin-badge-inst">Mid-West University</span>
+      </div>
+      <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+        <button class="btn btn-primary" onclick="window.print()" style="font-weight: 700;">
+          🖨️ Print Report / Save PDF
+        </button>
+      </div>
+    </div>
+
+    <!-- Candidate Search Bar (In-page lookup) -->
+    <div class="candidate-search-card no-print">
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+        <div>
+          <h2 style="font-size: 1.25rem; margin: 0; color: var(--text-primary);">Search Candidate Record</h2>
+          <p style="color: var(--text-secondary); font-size: 0.88rem; margin: 4px 0 0;">
+            Lookup candidate record by unique Candidate ID (e.g. <code style="color: #a5b4fc;">CID-2026-XXXXXX</code> or <code style="color: #a5b4fc;">AI-2026-0001</code>).
+          </p>
+        </div>
+      </div>
+      <form id="report-search-form" class="search-input-group" onsubmit="handleSearchSubmit(event)">
+        <input type="text" id="candidate-search-input" class="search-input-field" placeholder="Enter Candidate ID (e.g. CID-2026-XXXXXX or AI-2026-0001)..." required autocomplete="off">
+        <button type="submit" class="btn btn-primary" id="btn-report-search" style="padding: 13px 24px;">
+          🔍 Search Candidate
+        </button>
+      </form>
+      <div id="search-feedback" style="margin-top: 10px; display: none;"></div>
+      <div class="candidate-quick-chips" id="quick-candidates-container" style="display: none;">
+        <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">Available Candidates:</span>
+        <div id="quick-chips-list" style="display: flex; gap: 6px; flex-wrap: wrap;"></div>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div id="report-loading" style="text-align: center; padding: 60px 20px; display: none;">
+      <div style="font-size: 2.5rem; animation: spin 1s infinite linear; display: inline-block;">⏳</div>
+      <h3 style="margin-top: 16px; color: var(--text-primary);">Retrieving Candidate Dossier...</h3>
+      <p style="color: var(--text-secondary); font-size: 0.92rem;">Fetching verified database records, multimodal responses, and security telemetry...</p>
+    </div>
+
+    <!-- Error State -->
+    <div id="report-error" class="glass-card" style="display: none; text-align: center; padding: 48px 24px; border-color: rgba(239, 68, 68, 0.4);">
+      <div style="font-size: 3rem; margin-bottom: 12px;">⚠️</div>
+      <h3 style="color: #f87171; font-size: 1.3rem;" id="error-title">Candidate Not Found</h3>
+      <p style="color: var(--text-secondary); max-width: 550px; margin: 8px auto 20px;" id="error-message">
+        No candidate record found matching the specified Candidate ID.
+      </p>
+      <a href="admin.html" class="btn btn-outline btn-sm">Return to Admin Console</a>
+    </div>
+
+    <!-- Complete Candidate Dossier Container -->
+    <div id="dossier-content" style="display: none;">
+
+      <!-- SECTION 1 & 2: Candidate & Registration Information Card -->
+      <div class="glass-card" style="margin-bottom: 24px;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px; border-bottom: 1px solid var(--border-color); padding-bottom: 16px; margin-bottom: 20px;">
+          <div>
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px; flex-wrap: wrap;">
+              <span class="badge-role" style="background: rgba(99, 102, 241, 0.2); color: #a5b4fc; font-weight: 800; font-family: var(--font-display); font-size: 0.95rem;" id="cand-id-badge">
+                CID-XXXX-XXXXXX
+              </span>
+              <span class="badge-tag tech" style="margin: 0;" id="cand-role-badge">Software Engineer</span>
+              <span class="badge-tag" style="background: rgba(16, 185, 129, 0.15); color: #34d399; margin: 0;" id="cand-status-badge">Account Active</span>
+            </div>
+            <h2 style="font-size: 1.8rem; margin: 0; color: var(--text-primary);" id="cand-full-name">--</h2>
+            <p style="color: var(--text-secondary); margin: 4px 0 0;" id="cand-email">--</p>
+          </div>
+          <div style="text-align: right;">
+            <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Official Evaluation Score</div>
+            <div style="font-size: 2.4rem; font-weight: 800; font-family: var(--font-display); color: var(--accent-emerald);" id="cand-overall-score">--%</div>
+            <div style="font-size: 0.82rem; color: var(--text-secondary);" id="cand-overall-status">Assessment Completed</div>
+          </div>
+        </div>
+
+        <div class="grid-3" style="margin-bottom: 20px;">
+          <div>
+            <div style="font-size: 0.78rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Contact Phone</div>
+            <div style="font-size: 0.98rem; font-weight: 600; color: var(--text-primary); margin-top: 4px;" id="cand-phone">Not available</div>
+          </div>
+          <div>
+            <div style="font-size: 0.78rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Registration Date &amp; Exact Time</div>
+            <div style="font-size: 0.98rem; font-weight: 600; color: var(--text-primary); margin-top: 4px;" id="cand-reg-datetime">--</div>
+          </div>
+          <div>
+            <div style="font-size: 0.78rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Affiliated Institution</div>
+            <div style="font-size: 0.98rem; font-weight: 600; color: var(--text-primary); margin-top: 4px;" id="cand-institution">Mid-West University</div>
+          </div>
+        </div>
+
+        <!-- Registration & CV Information Details -->
+        <div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 18px;">
+          <h4 style="font-size: 1rem; color: var(--text-primary); margin: 0 0 12px; display: flex; align-items: center; gap: 8px;">
+            <span>📄</span> Registration CV Verification &amp; Match Analysis
+          </h4>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; font-size: 0.88rem;">
+            <div>
+              <span style="color: var(--text-muted); display: block;">Uploaded CV File:</span>
+              <strong id="cv-filename" style="color: var(--text-primary);">--</strong>
+            </div>
+            <div>
+              <span style="color: var(--text-muted); display: block;">CV Upload Date &amp; Time:</span>
+              <span id="cv-upload-datetime" style="color: var(--text-primary);">--</span>
+            </div>
+            <div>
+              <span style="color: var(--text-muted); display: block;">CV Verification Status:</span>
+              <span id="cv-verification-status" class="badge-role" style="background: rgba(16, 185, 129, 0.15); color: #34d399; font-weight: 700;">Verified</span>
+            </div>
+            <div>
+              <span style="color: var(--text-muted); display: block;">Extracted CV Name:</span>
+              <strong id="cv-extracted-name" style="color: var(--text-primary);">--</strong>
+            </div>
+            <div>
+              <span style="color: var(--text-muted); display: block;">Registered Candidate Name:</span>
+              <strong id="cv-registered-name" style="color: var(--text-primary);">--</strong>
+            </div>
+            <div>
+              <span style="color: var(--text-muted); display: block;">Name Matching Result:</span>
+              <span id="cv-name-match" class="badge-role" style="background: rgba(16, 185, 129, 0.15); color: #34d399; font-weight: 700;">Matched (100%)</span>
+            </div>
+          </div>
+
+          <div style="margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border-color); display: flex; gap: 16px; flex-wrap: wrap; align-items: center;">
+            <div style="font-size: 0.85rem; color: var(--text-muted);">
+              <strong>Verification Result:</strong> <span id="cv-verification-msg">Candidate identity verified successfully against submitted CV.</span>
+            </div>
+            <div style="font-size: 0.85rem; color: var(--text-muted); margin-left: auto;">
+              <strong>CV Screening Score:</strong> <span id="cv-screening-score" style="color: #a5b4fc; font-weight: 700;">--</span>
+            </div>
+          </div>
+
+          <div style="margin-top: 12px;" id="cv-skills-row">
+            <span style="font-size: 0.78rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; display: block; margin-bottom: 6px;">Verified Skills from CV:</span>
+            <div id="cv-skills-list" style="display: flex; gap: 6px; flex-wrap: wrap;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION 2 (cont'd): Side-by-Side Registration Photo and Interview Photo -->
+      <div class="glass-card" style="margin-bottom: 24px;">
+        <h3 class="section-title" style="font-size: 1.15rem; margin-bottom: 4px;">
+          Biometric Identity Verification: Photo Comparison
+        </h3>
+        <p class="section-subtitle" style="margin-bottom: 16px;">
+          Side-by-side comparison of candidate registration photo and interview-time webcam snapshot with associated timestamps.
+        </p>
+
+        <div class="photo-compare-grid">
+          <!-- Left: Registration Photo -->
+          <div class="photo-compare-card">
+            <div class="photo-compare-img-wrap">
+              <img id="photo-reg-img" class="photo-compare-img" src="" alt="Registration Photo" style="display: none;">
+              <div id="photo-reg-placeholder" style="font-size: 3.5rem;">👤</div>
+            </div>
+            <div class="photo-compare-label">Registration Photo</div>
+            <div class="photo-compare-time">
+              <span>Timestamp: </span><strong id="photo-reg-time">--</strong>
+            </div>
+            <span class="badge-role" style="background: rgba(99, 102, 241, 0.15); color: #a5b4fc; margin-top: 8px;">
+              Primary Enrollment Face
+            </span>
+          </div>
+
+          <!-- Right: Interview Photo -->
+          <div class="photo-compare-card">
+            <div class="photo-compare-img-wrap">
+              <img id="photo-interview-img" class="photo-compare-img" src="" alt="Interview Photo" style="display: none;">
+              <div id="photo-interview-placeholder" style="font-size: 3.5rem;">📷</div>
+            </div>
+            <div class="photo-compare-label">Interview Photo / Snapshot</div>
+            <div class="photo-compare-time">
+              <span>Timestamp: </span><strong id="photo-interview-time">--</strong>
+            </div>
+            <span class="badge-role" style="background: rgba(16, 185, 129, 0.15); color: #34d399; margin-top: 8px;" id="photo-interview-badge">
+              Active Session Verified
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION 3: Interview Information Summary -->
+      <div class="glass-card" style="margin-bottom: 24px;">
+        <h3 class="section-title" style="font-size: 1.15rem; margin-bottom: 16px;">
+          Interview Session Summary &amp; AI Metrics
+        </h3>
+
+        <!-- Termination Alert if Terminated -->
+        <div id="interview-termination-banner" style="display: none; background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.4); border-radius: var(--radius-md); padding: 14px 18px; margin-bottom: 18px;">
+          <div style="display: flex; align-items: center; gap: 10px; color: #f87171; font-weight: 700;">
+            <span style="font-size: 1.2rem;">❌</span>
+            <span>INTERVIEW TERMINATED EARLY BY PROCTORING ENFORCEMENT</span>
+          </div>
+          <p style="margin: 6px 0 0; color: #fca5a5; font-size: 0.9rem;" id="termination-reason-text">
+            Another person remained present after the final warning.
+          </p>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 20px;">
+          <div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 12px 14px;">
+            <span style="font-size: 0.78rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; display: block;">Interview ID</span>
+            <strong style="font-size: 1.05rem; color: var(--text-primary);" id="int-id">--</strong>
+          </div>
+          <div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 12px 14px;">
+            <span style="font-size: 0.78rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; display: block;">Start Date &amp; Time</span>
+            <strong style="font-size: 0.95rem; color: var(--text-primary);" id="int-start-datetime">--</strong>
+          </div>
+          <div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 12px 14px;">
+            <span style="font-size: 0.78rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; display: block;">End Date &amp; Time</span>
+            <strong style="font-size: 0.95rem; color: var(--text-primary);" id="int-end-datetime">--</strong>
+          </div>
+          <div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 12px 14px;">
+            <span style="font-size: 0.78rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; display: block;">Total Duration</span>
+            <strong style="font-size: 1.05rem; color: var(--text-primary);" id="int-duration">--</strong>
+          </div>
+          <div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 12px 14px;">
+            <span style="font-size: 0.78rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; display: block;">Session Status</span>
+            <span id="int-status-badge" class="badge-role" style="background: rgba(16, 185, 129, 0.15); color: #34d399; font-weight: 700;">Completed</span>
+          </div>
+          <div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 12px 14px;">
+            <span style="font-size: 0.78rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; display: block;">Questions Answered</span>
+            <strong style="font-size: 1.05rem; color: var(--text-primary);"><span id="int-answered-count">0</span> / <span id="int-total-count">0</span></strong>
+          </div>
+        </div>
+
+        <!-- Section Scores Matrix -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 14px; margin-bottom: 18px;">
+          <div style="text-align: center; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 16px;">
+            <div style="font-size: 0.78rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Overall Score</div>
+            <div style="font-size: 1.8rem; font-weight: 800; font-family: var(--font-display); color: var(--accent-emerald); margin-top: 4px;" id="score-overall">--%</div>
+          </div>
+          <div style="text-align: center; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 16px;">
+            <div style="font-size: 0.78rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Technical Score</div>
+            <div style="font-size: 1.8rem; font-weight: 800; font-family: var(--font-display); color: #818cf8; margin-top: 4px;" id="score-tech">--%</div>
+          </div>
+          <div style="text-align: center; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 16px;">
+            <div style="font-size: 0.78rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Communication</div>
+            <div style="font-size: 1.8rem; font-weight: 800; font-family: var(--font-display); color: var(--accent-cyan); margin-top: 4px;" id="score-comm">--%</div>
+          </div>
+          <div style="text-align: center; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 16px;">
+            <div style="font-size: 0.78rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Confidence Index</div>
+            <div style="font-size: 1.8rem; font-weight: 800; font-family: var(--font-display); color: #f59e0b; margin-top: 4px;" id="score-conf">--%</div>
+          </div>
+          <div style="text-align: center; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 16px;">
+            <div style="font-size: 0.78rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Eye Contact</div>
+            <div style="font-size: 1.8rem; font-weight: 800; font-family: var(--font-display); color: #ec4899; margin-top: 4px;" id="score-eye">--%</div>
+          </div>
+        </div>
+
+        <div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 16px;">
+          <strong style="color: var(--text-primary); font-size: 0.95rem; display: block; margin-bottom: 4px;">Overall Evaluator Assessment:</strong>
+          <p style="margin: 0; color: var(--text-secondary); font-size: 0.92rem; line-height: 1.6;" id="int-evaluation-summary">--</p>
+        </div>
+      </div>
+
+      <!-- SECTION 4: Complete Question & Answer History -->
+      <div class="glass-card" style="margin-bottom: 24px;">
+        <h3 class="section-title" style="font-size: 1.15rem; margin-bottom: 4px;">
+          Complete Question &amp; Answer History
+        </h3>
+        <p class="section-subtitle" style="margin-bottom: 18px;">
+          Chronological record of every question asked, candidate transcript, exact timestamps, and AI evaluations.
+        </p>
+
+        <div id="qa-history-container">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+
+      <!-- SECTION 5: Adaptive Interview History -->
+      <div class="glass-card" style="margin-bottom: 24px;">
+        <h3 class="section-title" style="font-size: 1.15rem; margin-bottom: 4px;">
+          Dynamic Adaptive Interview Flow &amp; Progression
+        </h3>
+        <p class="section-subtitle" style="margin-bottom: 18px;">
+          Trace of dynamic question difficulty progression, evaluation band transitions, and competency branch reasons.
+        </p>
+
+        <div id="adaptive-flow-container">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+
+      <!-- SECTION 6: Interview Video Player -->
+      <div class="glass-card" style="margin-bottom: 24px;">
+        <h3 class="section-title" style="font-size: 1.15rem; margin-bottom: 4px;">
+          Interview Video Recording &amp; Telemetry
+        </h3>
+        <p class="section-subtitle" style="margin-bottom: 16px;">
+          Archived candidate video stream and media telemetry.
+        </p>
+
+        <div id="video-available-section" style="display: none;">
+          <div style="max-width: 720px; margin: 0 auto; background: #000; border-radius: var(--radius-md); overflow: hidden; border: 1px solid var(--border-color);">
+            <video id="dossier-video-player" controls playsinline preload="metadata" style="width: 100%; height: auto; max-height: 400px; display: block; background: #000;"></video>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center; max-width: 720px; margin: 12px auto 0; font-size: 0.85rem; color: var(--text-muted); flex-wrap: wrap; gap: 8px;">
+            <span>Interview ID: <strong id="video-int-id" style="color: var(--text-primary);">--</strong></span>
+            <span>Duration: <strong id="video-duration" style="color: var(--text-primary);">--</strong></span>
+            <span>Recorded: <strong id="video-recorded-at" style="color: var(--text-primary);">--</strong></span>
+          </div>
+        </div>
+
+        <div id="video-unavailable-section" style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 28px; text-align: center;">
+          <div style="font-size: 2.2rem; margin-bottom: 8px;">📹</div>
+          <div style="font-weight: 700; color: var(--text-primary); font-size: 1rem; margin-bottom: 4px;">
+            Video Recording: <span style="color: var(--accent-amber);">Not available</span>
+          </div>
+          <p style="color: var(--text-muted); font-size: 0.88rem; max-width: 520px; margin: 0 auto;" id="video-unavailable-msg">
+            No video recording was captured for this candidate session (Video capture optional during demonstration test).
+          </p>
+        </div>
+      </div>
+
+      <!-- SECTION 7: Face Verification / Identity Events -->
+      <div class="glass-card" style="margin-bottom: 24px;">
+        <h3 class="section-title" style="font-size: 1.15rem; margin-bottom: 4px;">
+          Identity Verification &amp; Biometric Audit Events
+        </h3>
+        <p class="section-subtitle" style="margin-bottom: 16px;">
+          Multi-layer identity confirmation records, name matching audit, and liveness verification.
+        </p>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; font-size: 0.9rem;">
+          <div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 14px;">
+            <span style="font-size: 0.78rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; display: block;">Verification Status</span>
+            <strong style="color: #34d399; font-size: 1rem;" id="id-ver-status">Verified</strong>
+          </div>
+          <div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 14px;">
+            <span style="font-size: 0.78rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; display: block;">Verification Timestamp</span>
+            <strong style="color: var(--text-primary);" id="id-ver-date">--</strong>
+          </div>
+          <div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 14px;">
+            <span style="font-size: 0.78rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; display: block;">Liveness Confirmation</span>
+            <strong style="color: var(--accent-cyan);" id="id-liveness-status">Active Stream Verified</strong>
+          </div>
+          <div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 14px;">
+            <span style="font-size: 0.78rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; display: block;">Security Environment Rule</span>
+            <strong style="color: var(--text-primary);">Solitary Candidate Enforced</strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION 8: Other Face / Violation History -->
+      <div class="glass-card" style="margin-bottom: 24px;">
+        <h3 class="section-title" style="font-size: 1.15rem; margin-bottom: 4px;">
+          Proctoring Security &amp; Violation Audit Log
+        </h3>
+        <p class="section-subtitle" style="margin-bottom: 16px;">
+          Complete audit trail of multi-person detection warnings, proctoring security events, and enforcement actions.
+        </p>
+
+        <div class="table-responsive">
+          <table class="custom-table" style="font-size: 0.88rem;">
+            <thead>
+              <tr>
+                <th style="width: 140px;">Timestamp</th>
+                <th>Security Event</th>
+                <th style="width: 120px;">Faces Detected</th>
+                <th style="width: 130px;">Warning Level</th>
+                <th>Action Taken / Details</th>
+              </tr>
+            </thead>
+            <tbody id="security-violations-tbody">
+              <!-- Populated dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- SECTION 9: Professional Lifecycle Timeline -->
+      <div class="glass-card" style="margin-bottom: 32px;">
+        <h3 class="section-title" style="font-size: 1.15rem; margin-bottom: 4px;">
+          Candidate Lifecycle Chronological Timeline
+        </h3>
+        <p class="section-subtitle" style="margin-bottom: 16px;">
+          Complete chronological record of all major candidate milestones from initial registration to interview conclusion.
+        </p>
+
+        <div class="timeline-container" id="lifecycle-timeline-container">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Official Print Footer (Visible ONLY on Print) -->
+    <div class="print-footer-official">
+      AI-Powered Video Interview Assessment System &bull; Final-Year Computer Engineering Project &bull; Mid-West University &bull; Confidential
+    </div>
+
+  </div>
+
+  <script src="js/main.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    let activeCandidateData = null;
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      // 1. Strict Administrator Authentication Guard
+      const token = Api.getToken();
+      const user = Api.getUser();
+      if (!token || !user || (user.role !== "admin" && user.role !== "recruiter")) {
+        Api.clearAuth();
+        showToast("Access Restricted: Please login with administrator credentials.", "error");
+        setTimeout(() => {
+          window.location.href = "login.html?portal=admin";
+        }, 1000);
+        return;
+      }
+
+      // Display Admin ID & Institution
+      if (user.admin_id) {
+        document.getElementById("admin-badge-id").textContent = `ADMIN ID: ${user.admin_id}`;
+      }
+      if (user.institution) {
+        document.getElementById("admin-badge-inst").textContent = user.institution;
+      }
+
+      // Load Quick Suggestions for available candidate IDs from stats
+      loadQuickCandidateSuggestions();
+
+      // Check if candidate_id or id is passed in URL query param
+      const urlParams = new URLSearchParams(window.location.search);
+      const queryId = urlParams.get("candidate_id") || urlParams.get("id");
+      if (queryId) {
+        document.getElementById("candidate-search-input").value = queryId;
+        searchCandidateRecord(queryId);
+      }
+    });
+
+    async function loadQuickCandidateSuggestions() {
+      try {
+        const res = await Api.request("/api/admin/candidates");
+        if (res && res.candidates && res.candidates.length > 0) {
+          const container = document.getElementById("quick-candidates-container");
+          const chipsList = document.getElementById("quick-chips-list");
+          container.style.display = "flex";
+          chipsList.innerHTML = "";
+          res.candidates.slice(0, 8).forEach(c => {
+            const cid = c.candidate_id || `ID-${c.id}`;
+            const chip = document.createElement("button");
+            chip.type = "button";
+            chip.className = "candidate-chip";
+            chip.textContent = `${cid} (${c.full_name})`;
+            chip.onclick = () => {
+              document.getElementById("candidate-search-input").value = cid;
+              searchCandidateRecord(cid);
+            };
+            chipsList.appendChild(chip);
+          });
+        }
+      } catch (err) {
+        console.warn("Could not fetch candidate suggestions:", err);
+      }
+    }
+
+    function handleSearchSubmit(e) {
+      e.preventDefault();
+      const input = document.getElementById("candidate-search-input").value.trim();
+      if (!input) return;
+      // Update browser URL without reloading
+      const newUrl = `${window.location.pathname}?candidate_id=${encodeURIComponent(input)}`;
+      window.history.pushState({ path: newUrl }, "", newUrl);
+      searchCandidateRecord(input);
+    }
+
+    async function searchCandidateRecord(candidateIdentifier) {
+      const loading = document.getElementById("report-loading");
+      const errorDiv = document.getElementById("report-error");
+      const dossier = document.getElementById("dossier-content");
+      const searchBtn = document.getElementById("btn-report-search");
+
+      loading.style.display = "block";
+      errorDiv.style.display = "none";
+      dossier.style.display = "none";
+      if (searchBtn) {
+        searchBtn.disabled = true;
+        searchBtn.textContent = "Searching...";
+      }
+
+      try {
+        const res = await Api.request(`/api/admin/candidates/${encodeURIComponent(candidateIdentifier)}/report`);
+        activeCandidateData = res.data;
+        renderCandidateDossier(activeCandidateData);
+        dossier.style.display = "block";
+      } catch (err) {
+        console.error("Candidate search error:", err);
+        errorDiv.style.display = "block";
+        document.getElementById("error-title").textContent = "Candidate Not Found";
+        document.getElementById("error-message").textContent = err.message || `No candidate record found matching ID '${candidateIdentifier}'.`;
+      } finally {
+        loading.style.display = "none";
+        if (searchBtn) {
+          searchBtn.disabled = false;
+          searchBtn.textContent = "🔍 Search Candidate";
+        }
+      }
+    }
+
+    function renderCandidateDossier(data) {
+      const c = data.candidate;
+      const cv = data.registration;
+      const photos = data.photos;
+      const intv = data.interview;
+
+      // 1. Candidate Info
+      document.getElementById("cand-id-badge").textContent = c.candidate_id;
+      document.getElementById("cand-role-badge").textContent = c.target_role;
+      document.getElementById("cand-full-name").textContent = c.full_name;
+      document.getElementById("cand-email").textContent = c.email;
+      document.getElementById("cand-phone").textContent = c.phone || "Not available";
+      document.getElementById("cand-reg-datetime").textContent = c.registration_datetime || "Not available";
+      document.getElementById("cand-institution").textContent = c.institution || "Mid-West University";
+      document.getElementById("cand-status-badge").textContent = c.account_status;
+
+      // Overall Score Header Badge
+      document.getElementById("cand-overall-score").textContent = intv.has_interview ? `${intv.overall_score}%` : "N/A";
+      document.getElementById("cand-overall-status").textContent = intv.status;
+
+      // Print Header Meta
+      document.getElementById("print-meta-header").textContent = 
+        `Candidate ID: ${c.candidate_id} | Name: ${c.full_name} | Role: ${c.target_role} | Generated: ${new Date().toLocaleString()}`;
+
+      // 2. Registration & CV Info
+      document.getElementById("cv-filename").textContent = cv.filename || "Not available";
+      document.getElementById("cv-upload-datetime").textContent = cv.uploaded_at || "Not available";
+      document.getElementById("cv-extracted-name").textContent = cv.extracted_cv_name || "Not available";
+      document.getElementById("cv-registered-name").textContent = cv.registered_candidate_name || c.full_name;
+      document.getElementById("cv-name-match").textContent = cv.name_matching_result || "Not available";
+      document.getElementById("cv-verification-status").textContent = (cv.verification_status || "Unverified").toUpperCase();
+      document.getElementById("cv-verification-msg").textContent = cv.verification_message || "Not available";
+      document.getElementById("cv-screening-score").textContent = cv.has_cv ? `${cv.screening_score}%` : "N/A";
+
+      // Skills tags
+      const skillsContainer = document.getElementById("cv-skills-list");
+      skillsContainer.innerHTML = "";
+      if (cv.technical_skills && cv.technical_skills.length > 0) {
+        cv.technical_skills.forEach(skill => {
+          const tag = document.createElement("span");
+          tag.className = "badge-tag tech";
+          tag.textContent = skill;
+          skillsContainer.appendChild(tag);
+        });
+      } else {
+        skillsContainer.innerHTML = `<span style="color:var(--text-muted); font-size:0.85rem;">No extracted skills</span>`;
+      }
+
+      // 3. Side-by-Side Photos
+      const regPhoto = photos.registration_photo;
+      const intPhoto = photos.interview_photo;
+
+      // Registration Photo
+      const regImg = document.getElementById("photo-reg-img");
+      const regPlaceholder = document.getElementById("photo-reg-placeholder");
+      if (regPhoto.has_photo && regPhoto.photo_url) {
+        regImg.src = regPhoto.photo_url;
+        regImg.style.display = "block";
+        regPlaceholder.style.display = "none";
+      } else {
+        regImg.style.display = "none";
+        regPlaceholder.style.display = "block";
+      }
+      document.getElementById("photo-reg-time").textContent = regPhoto.timestamp || "Not available";
+
+      // Interview Photo
+      const intImg = document.getElementById("photo-interview-img");
+      const intPlaceholder = document.getElementById("photo-interview-placeholder");
+      const intBadge = document.getElementById("photo-interview-badge");
+      if (intPhoto.has_photo && intPhoto.photo_url) {
+        intImg.src = intPhoto.photo_url;
+        intImg.style.display = "block";
+        intPlaceholder.style.display = "none";
+        intBadge.textContent = "Interview Snapshot Captured";
+        intBadge.style.background = "rgba(16, 185, 129, 0.15)";
+        intBadge.style.color = "#34d399";
+      } else {
+        intImg.style.display = "none";
+        intPlaceholder.style.display = "block";
+        intBadge.textContent = "Not available";
+        intBadge.style.background = "rgba(245, 158, 11, 0.15)";
+        intBadge.style.color = "#f59e0b";
+      }
+      document.getElementById("photo-interview-time").textContent = intPhoto.timestamp || "Not available";
+
+      // 4. Interview Info & Scores
+      document.getElementById("int-id").textContent = intv.has_interview ? `#${intv.interview_id}` : "N/A";
+      document.getElementById("int-start-datetime").textContent = intv.started_at || "Not available";
+      document.getElementById("int-end-datetime").textContent = intv.completed_at || "Not available";
+      document.getElementById("int-duration").textContent = intv.duration || "Not available";
+      document.getElementById("int-status-badge").textContent = intv.status;
+      document.getElementById("int-answered-count").textContent = intv.answered_questions_count;
+      document.getElementById("int-total-count").textContent = intv.questions_count;
+
+      document.getElementById("score-overall").textContent = intv.has_interview ? `${intv.overall_score}%` : "N/A";
+      document.getElementById("score-tech").textContent = intv.has_interview ? `${intv.technical_score}%` : "N/A";
+      document.getElementById("score-comm").textContent = intv.has_interview ? `${intv.communication_score}%` : "N/A";
+      document.getElementById("score-conf").textContent = intv.has_interview ? `${intv.confidence_score}%` : "N/A";
+      document.getElementById("score-eye").textContent = intv.has_interview ? `${intv.eye_contact_score}%` : "N/A";
+      document.getElementById("int-evaluation-summary").textContent = intv.feedback || intv.overall_evaluation || "Not available";
+
+      // Termination Banner
+      const termBanner = document.getElementById("interview-termination-banner");
+      if (intv.is_terminated) {
+        termBanner.style.display = "block";
+        document.getElementById("termination-reason-text").textContent = intv.termination_reason || "Session terminated by proctoring engine.";
+      } else {
+        termBanner.style.display = "none";
+      }
+
+      // 5. Complete Question & Answer History
+      renderQAHistory(data.qa_history);
+
+      // 6. Adaptive Flow
+      renderAdaptiveFlow(data.adaptive_history);
+
+      // 7. Video Section
+      const vid = data.video;
+      const vidAvail = document.getElementById("video-available-section");
+      const vidUnavail = document.getElementById("video-unavailable-section");
+      if (vid.has_video && vid.video_url) {
+        vidAvail.style.display = "block";
+        vidUnavail.style.display = "none";
+        const player = document.getElementById("dossier-video-player");
+        player.src = vid.video_url;
+        document.getElementById("video-int-id").textContent = `#${vid.interview_id}`;
+        document.getElementById("video-duration").textContent = vid.duration;
+        document.getElementById("video-recorded-at").textContent = vid.recording_start;
+      } else {
+        vidAvail.style.display = "none";
+        vidUnavail.style.display = "block";
+        document.getElementById("video-unavailable-msg").textContent = vid.message || "No video recording was captured for this candidate session.";
+      }
+
+      // 8. Face Verification Audit
+      const fv = data.face_verification;
+      document.getElementById("id-ver-status").textContent = fv.verification_status;
+      document.getElementById("id-ver-date").textContent = fv.verification_date || "Not available";
+      document.getElementById("id-liveness-status").textContent = fv.liveness_result;
+
+      // 9. Security Violations
+      renderSecurityViolations(data.security_events);
+
+      // 10. Timeline
+      renderTimeline(data.timeline);
+    }
+
+    function renderQAHistory(qaList) {
+      const container = document.getElementById("qa-history-container");
+      if (!qaList || qaList.length === 0) {
+        container.innerHTML = `
+          <div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 28px; text-align: center; color: var(--text-muted);">
+            No interview questions or candidate answers recorded for this session.
+          </div>
+        `;
+        return;
+      }
+
+      let html = "";
+      qaList.forEach(q => {
+        const scoreColor = q.score >= 80 ? "var(--accent-emerald)" : (q.score >= 60 ? "#818cf8" : "var(--accent-amber)");
+        const diffBadge = q.difficulty.toLowerCase() === "hard" ? "var(--accent-amber)" : (q.difficulty.toLowerCase() === "medium" ? "#818cf8" : "var(--accent-emerald)");
+
+        html += `
+          <div class="qa-card">
+            <div class="qa-card-header">
+              <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                <span class="badge-role" style="background: rgba(99, 102, 241, 0.2); color: #a5b4fc; font-weight: 800; font-size: 0.95rem;">
+                  Question #${q.question_number}
+                </span>
+                <span class="badge-tag tech" style="margin: 0;">${escapeHtml(q.category)}</span>
+                <span class="badge-role" style="background: rgba(255,255,255,0.08); color: ${diffBadge}; font-weight: 600;">
+                  ${escapeHtml(q.difficulty)}
+                </span>
+              </div>
+              <div style="font-size: 0.82rem; color: var(--text-muted);">
+                Asked: <strong style="color: var(--text-secondary);">${q.asked_datetime}</strong>
+              </div>
+            </div>
+
+            <div style="font-size: 1.08rem; font-weight: 700; color: var(--text-primary); margin-bottom: 10px; line-height: 1.5;">
+              ${escapeHtml(q.question_text)}
+            </div>
+
+            <div style="font-size: 0.82rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Candidate Verbal Answer Transcript:</div>
+            <div class="qa-answer-box">
+              "${escapeHtml(q.candidate_answer)}"
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem; color: var(--text-muted); flex-wrap: wrap; gap: 8px; margin-bottom: 12px;">
+              <span>Submitted: <strong style="color: var(--text-secondary);">${q.answered_datetime}</strong></span>
+              <span>Answer Duration: <strong style="color: var(--text-primary);">${q.duration_seconds}s</strong></span>
+              <span>Sentiment: <strong style="color: var(--text-primary);">${q.sentiment}</strong></span>
+            </div>
+
+            <div class="qa-metrics-grid">
+              <div class="qa-metric-item">
+                <div class="qa-metric-label">AI Score</div>
+                <div class="qa-metric-val" style="color: ${scoreColor};">${q.score}%</div>
+              </div>
+              <div class="qa-metric-item">
+                <div class="qa-metric-label">Technical Precision</div>
+                <div class="qa-metric-val" style="color: #818cf8;">${q.technical_score}%</div>
+              </div>
+              <div class="qa-metric-item">
+                <div class="qa-metric-label">Context Relevance</div>
+                <div class="qa-metric-val" style="color: var(--accent-cyan);">${q.relevance_score}%</div>
+              </div>
+              <div class="qa-metric-item">
+                <div class="qa-metric-label">Eye Contact</div>
+                <div class="qa-metric-val" style="color: #ec4899;">${q.eye_contact_pct}%</div>
+              </div>
+              <div class="qa-metric-item">
+                <div class="qa-metric-label">Head Stability</div>
+                <div class="qa-metric-val" style="color: #10b981;">${q.head_stability_pct}%</div>
+              </div>
+            </div>
+
+            <div style="margin-top: 12px; background: rgba(255, 255, 255, 0.03); border-radius: var(--radius-sm); padding: 10px 14px; font-size: 0.86rem; color: var(--text-secondary);">
+              <strong style="color: var(--text-primary);">Evaluator Feedback:</strong> ${escapeHtml(q.feedback)}
+            </div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+    }
+
+    function renderAdaptiveFlow(adaptiveList) {
+      const container = document.getElementById("adaptive-flow-container");
+      if (!adaptiveList || adaptiveList.length === 0) {
+        container.innerHTML = `
+          <div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 24px; text-align: center; color: var(--text-muted); font-size: 0.9rem;">
+            Initial question established at Easy foundational difficulty. Single question or standard sequence completed.
+          </div>
+        `;
+        return;
+      }
+
+      let html = '<div class="adaptive-flow-row">';
+      adaptiveList.forEach(item => {
+        html += `
+          <div class="adaptive-step-card">
+            <div class="adaptive-step-number">${item.step_number}</div>
+            <div style="flex: 1;">
+              <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 6px;">
+                <span class="badge-role" style="background: rgba(99, 102, 241, 0.2); color: #a5b4fc; font-weight: 700;">
+                  Adaptation Step #${item.step_number}
+                </span>
+                <span class="badge-role" style="background: rgba(6, 182, 212, 0.15); color: #06b6d4; font-weight: 700;">
+                  ${escapeHtml(item.difficulty_shift)}
+                </span>
+                <span style="font-size: 0.8rem; color: var(--text-muted);">${item.timestamp}</span>
+              </div>
+
+              <div style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 4px;">
+                <strong>Previous Question:</strong> ${escapeHtml(item.previous_question)}
+              </div>
+              <div style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 8px; font-style: italic;">
+                Candidate Performance: <strong>${item.evaluation}</strong> (${item.score}%)
+              </div>
+
+              <div style="background: var(--bg-card); border-left: 3px solid #06b6d4; border-radius: var(--radius-sm); padding: 10px 12px; margin-bottom: 8px;">
+                <div style="font-size: 0.78rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Selected Next Question (${escapeHtml(item.category)}):</div>
+                <div style="font-size: 0.95rem; font-weight: 700; color: var(--text-primary); margin-top: 2px;">
+                  ${escapeHtml(item.next_question)}
+                </div>
+              </div>
+
+              <div style="font-size: 0.84rem; color: var(--text-muted);">
+                <strong>Adaptive Rationale:</strong> ${escapeHtml(item.reason)}
+              </div>
+            </div>
+          </div>
+        `;
+      });
+      html += '</div>';
+
+      container.innerHTML = html;
+    }
+
+    function renderSecurityViolations(violations) {
+      const tbody = document.getElementById("security-violations-tbody");
+      if (!violations || violations.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 24px;">
+              ✅ Solitary candidate environment maintained. No unauthorized faces or proctoring warnings recorded.
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      let rows = "";
+      violations.forEach(v => {
+        let badgeColor = "#34d399";
+        let badgeBg = "rgba(16, 185, 129, 0.15)";
+        if (v.warning_level === "terminated") {
+          badgeColor = "#f87171";
+          badgeBg = "rgba(239, 68, 68, 0.2)";
+        } else if (v.warning_level === "final_warning") {
+          badgeColor = "#f59e0b";
+          badgeBg = "rgba(245, 158, 11, 0.2)";
+        } else if (v.warning_level === "warning_1") {
+          badgeColor = "#818cf8";
+          badgeBg = "rgba(99, 102, 241, 0.2)";
+        }
+
+        rows += `
+          <tr>
+            <td style="color: var(--text-secondary);">${v.timestamp}</td>
+            <td style="font-weight: 600; color: var(--text-primary);">${escapeHtml(v.event_type)}</td>
+            <td style="text-align: center;"><span class="badge-role" style="background: rgba(255,255,255,0.06);">${v.faces_detected} Faces</span></td>
+            <td><span class="badge-role" style="background: ${badgeBg}; color: ${badgeColor}; font-weight: 700;">${escapeHtml(v.warning_level.replace('_', ' ').toUpperCase())}</span></td>
+            <td style="color: var(--text-secondary);">${escapeHtml(v.action_taken)}</td>
+          </tr>
+        `;
+      });
+      tbody.innerHTML = rows;
+    }
+
+    function renderTimeline(timelineList) {
+      const container = document.getElementById("lifecycle-timeline-container");
+      if (!timelineList || timelineList.length === 0) {
+        container.innerHTML = `<div style="color: var(--text-muted);">No milestone events recorded.</div>`;
+        return;
+      }
+
+      let html = "";
+      timelineList.forEach(t => {
+        html += `
+          <div class="timeline-node">
+            <div class="timeline-dot">⚡</div>
+            <div class="timeline-content">
+              <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 4px;">
+                <span style="font-weight: 700; color: var(--text-primary); font-size: 0.95rem;">${escapeHtml(t.event_type)}</span>
+                <span class="badge-role" style="background: rgba(99, 102, 241, 0.15); color: #a5b4fc; font-size: 0.76rem;">${escapeHtml(t.badge || "Recorded")}</span>
+              </div>
+              <div style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 4px;">
+                ${escapeHtml(t.title)}
+              </div>
+              <div style="font-size: 0.78rem; color: var(--text-muted);">
+                ${escapeHtml(t.formatted_datetime)}
+              </div>
+            </div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+    }
+
+    function escapeHtml(str) {
+      if (!str) return "";
+      return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    }
+  </script>
+</body>
+</html>

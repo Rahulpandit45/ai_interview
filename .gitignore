@@ -1,0 +1,75 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+.venv/
+
+# Environment Variables & Secrets
+.env
+.env.local
+.env.production
+.env.staging
+*.env
+
+# SQLite databases & Local dev storage
+*.sqlite
+*.sqlite3
+*.db
+backend/interview_db.sqlite
+
+# Media uploads (kept on Cloudflare R2 in production)
+backend/uploads/recordings/*.webm
+backend/uploads/recordings/*.wav
+backend/uploads/recordings/*.mp4
+
+# Reports output
+backend/reports/*.pdf
+
+# IDE & OS files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Logs
+*.log
+
+# Cloudflared binaries and local config
+cloudflared.exe
+*.exe
+.cloudflared/
+config.yml
+

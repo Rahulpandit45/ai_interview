@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Resume Screening - AI Video Interview System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <script>(function(){try{var t=localStorage.getItem("ai_theme")||"dark";document.documentElement.setAttribute("data-theme",t);}catch(e){}})();</script>
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="container nav-container">
+      <a href="index.html" class="brand-logo">
+        <div class="brand-icon">⚡</div>
+        <span>AI Video <span class="gradient-text">Interview System</span></span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="index.html" class="nav-link">Home</a></li>
+        <li><a href="dashboard.html" class="nav-link">Dashboard</a></li>
+        <li><a href="resume_upload.html" class="nav-link active">Resume Screening</a></li>
+      </ul>
+      <div id="nav-user-slot" class="nav-user"></div>
+    </div>
+  </nav>
+
+  <div class="container" style="padding-top: 40px; padding-bottom: 80px; max-width: 960px;">
+    <div style="text-align: center; margin-bottom: 36px;">
+      <h1 style="font-size: 2.2rem;">Resume Upload & <span class="gradient-text">NLP Screening</span></h1>
+      <p style="color: var(--text-secondary); max-width: 650px; margin: 8px auto 0;">
+        Upload your resume (PDF or DOCX). Our NLP engine extracts technical skills, education, and experience, evaluating qualification relevance for your target engineering role.
+      </p>
+    </div>
+
+    <!-- Upload Card -->
+    <div class="glass-card" style="margin-bottom: 32px;">
+      <form id="resume-upload-form">
+        <div style="display: flex; gap: 20px; align-items: center; margin-bottom: 24px; flex-wrap: wrap;">
+          <div style="flex: 1; min-width: 250px;">
+            <label style="display: block; font-size: 0.88rem; margin-bottom: 8px; font-weight: 500; color: var(--text-secondary);">Target Role For Screening</label>
+            <select id="target_role" class="form-control">
+              <option value="Software Engineer">Software Engineer</option>
+              <option value="AI/ML Engineer">AI/ML Engineer</option>
+              <option value="Full Stack Developer">Full Stack Developer</option>
+              <option value="Data Scientist">Data Scientist</option>
+            </select>
+          </div>
+          <div style="flex: 1; min-width: 250px; align-self: flex-end;">
+            <button type="submit" id="btn-submit-resume" class="btn btn-primary" style="width: 100%; height: 46px;" disabled>
+              Analyze & Screen Resume
+            </button>
+          </div>
+        </div>
+
+        <div id="dropzone" class="dropzone" tabindex="0" role="button" aria-label="Dropzone for uploading resume file">
+          <input type="file" id="resume-file" accept=".pdf,.docx,.txt" style="display: none;">
+          <div id="dropzone-idle-view">
+            <div style="font-size: 3rem; margin-bottom: 12px; transition: transform 0.3s ease;">📄</div>
+            <h3 style="font-size: 1.2rem; margin-bottom: 6px;" id="dropzone-title">Click to upload or drag & drop your resume</h3>
+            <p style="color: var(--text-muted); font-size: 0.88rem;" id="dropzone-subtitle">Supported formats: PDF, DOCX, TXT (Max 10MB)</p>
+          </div>
+          <div id="dropzone-active-view" style="display: none;">
+            <div style="font-size: 2.6rem; margin-bottom: 8px; color: var(--accent-emerald);">✓</div>
+            <div class="dropzone-file-selected" id="dropzone-file-pill">
+              <span id="dropzone-filename">resume.pdf</span>
+              <span id="dropzone-filesize" style="font-size: 0.8rem; opacity: 0.8;">(0 KB)</span>
+              <button type="button" id="btn-remove-resume-file" style="background: none; border: none; color: #f87171; cursor: pointer; font-size: 1rem; margin-left: 6px; padding: 2px;" title="Remove file">✕</button>
+            </div>
+            <p style="color: var(--accent-emerald); font-size: 0.85rem; margin-top: 10px; font-weight: 500;">
+              File ready for NLP parsing. Click "Analyze & Screen Resume" above.
+            </p>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <!-- Results Section (Hidden until parsed) -->
+    <div id="results-section" style="display: none;">
+      
+      <!-- Identity Name Verification Alert Card -->
+      <div id="verification-banner" class="glass-card" style="margin-bottom: 24px; padding: 18px 24px; display: none;">
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px;">
+          <div style="display: flex; align-items: center; gap: 14px;">
+            <div id="verif-icon" style="font-size: 2rem;">🔒</div>
+            <div>
+              <div id="verif-title" style="font-weight: 700; font-size: 1.05rem;">CV Identity Verification</div>
+              <div id="verif-desc" style="font-size: 0.88rem; color: var(--text-secondary); margin-top: 2px;">Checking registered name match...</div>
+            </div>
+          </div>
+          <span id="verif-badge" class="badge-role">Checking...</span>
+        </div>
+      </div>
+
+      <!-- Screening Score Highlight Card -->
+      <div class="glass-card" style="margin-bottom: 28px; background: linear-gradient(135deg, rgba(22, 30, 49, 0.9), rgba(17, 24, 39, 0.9));">
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 24px;">
+          <div>
+            <span class="badge-role" style="background: rgba(16, 185, 129, 0.2); color: #34d399; margin-bottom: 8px; display: inline-block;">Screening Complete</span>
+            <h2 style="font-size: 1.8rem; margin-bottom: 4px;" id="result-candidate-name">Candidate Profile</h2>
+            <p style="color: var(--text-secondary); font-size: 0.92rem;" id="result-target-role">Target Role: Software Engineer</p>
+          </div>
+
+          <div style="text-align: right;">
+            <div style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Relevance Match Score</div>
+            <div style="font-size: 3rem; font-weight: 800; font-family: var(--font-display); color: var(--accent-emerald);" id="result-screening-score">85%</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Detailed Breakdown Grid -->
+      <div class="grid-2" style="margin-bottom: 32px;">
+        <!-- Extracted Skills -->
+        <div class="glass-card">
+          <h3 class="section-title" style="font-size: 1.2rem; margin-bottom: 16px;">Extracted Technical Skills</h3>
+          <div id="result-tech-skills"></div>
+
+          <h3 class="section-title" style="font-size: 1.2rem; margin-top: 24px; margin-bottom: 16px;">Soft Skills</h3>
+          <div id="result-soft-skills"></div>
+        </div>
+
+        <!-- Role Requirement Matching -->
+        <div class="glass-card">
+          <h3 class="section-title" style="font-size: 1.2rem; margin-bottom: 16px;">Job Role Skill Alignment</h3>
+          <div style="margin-bottom: 16px;">
+            <div style="font-size: 0.85rem; font-weight: 600; color: #34d399; margin-bottom: 6px;">✓ Matched Required Skills:</div>
+            <div id="result-matched-skills"></div>
+          </div>
+          <div>
+            <div style="font-size: 0.85rem; font-weight: 600; color: var(--accent-amber); margin-bottom: 6px;">⚠ Recommended Additional Skills:</div>
+            <div id="result-missing-skills"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action: Proceed to Interview -->
+      <div class="glass-card" style="text-align: center; padding: 36px;">
+        <h3 style="font-size: 1.4rem; margin-bottom: 8px;">Ready to Begin Your AI Video Interview?</h3>
+        <p id="proceed-desc-text" style="color: var(--text-secondary); max-width: 600px; margin: 0 auto 20px;">
+          Our dynamic question generator will tailor questions based on your identified skills and target role.
+        </p>
+        <button id="btn-proceed-interview" class="btn btn-primary btn-lg">
+          Launch AI Video Interview Room ➔
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="js/main.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      requireAuth();
+      const dropzone = document.getElementById("dropzone");
+      const fileInput = document.getElementById("resume-file");
+      const submitBtn = document.getElementById("btn-submit-resume");
+      const uploadForm = document.getElementById("resume-upload-form");
+      const targetRoleSelect = document.getElementById("target_role");
+
+      // Check if candidate already has target role
+      const user = Api.getUser();
+      if (user && user.target_role) {
+        targetRoleSelect.value = user.target_role;
+      }
+
+      const idleView = document.getElementById("dropzone-idle-view");
+      const activeView = document.getElementById("dropzone-active-view");
+      const filenameEl = document.getElementById("dropzone-filename");
+      const filesizeEl = document.getElementById("dropzone-filesize");
+      const removeBtn = document.getElementById("btn-remove-resume-file");
+
+      function formatBytes(bytes) {
+        if (bytes < 1024) return `${bytes} B`;
+        if (bytes < 1048576) return `${(bytes / 1024).toFixed(1)} KB`;
+        return `${(bytes / 1048576).toFixed(2)} MB`;
+      }
+
+      function setResumeFile(file) {
+        if (!file) {
+          fileInput.value = "";
+          idleView.style.display = "block";
+          activeView.style.display = "none";
+          submitBtn.disabled = true;
+          return;
+        }
+
+        const validExts = [".pdf", ".docx", ".txt"];
+        const ext = "." + file.name.split(".").pop().toLowerCase();
+        if (!validExts.includes(ext)) {
+          showToast(`Invalid file format "${ext}". Please upload a PDF, DOCX, or TXT file.`, "error");
+          return;
+        }
+
+        if (file.size > 10 * 1024 * 1024) {
+          showToast("File exceeds 10MB limit. Please upload a smaller resume.", "warning");
+          return;
+        }
+
+        filenameEl.textContent = file.name;
+        filesizeEl.textContent = `(${formatBytes(file.size)})`;
+        idleView.style.display = "none";
+        activeView.style.display = "block";
+        submitBtn.disabled = false;
+      }
+
+      dropzone.addEventListener("click", (e) => {
+        if (e.target === removeBtn || removeBtn.contains(e.target)) return;
+        fileInput.click();
+      });
+
+      dropzone.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          fileInput.click();
+        }
+      });
+
+      removeBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        setResumeFile(null);
+        showToast("Resume selection cleared", "info");
+      });
+
+      fileInput.addEventListener("change", () => {
+        if (fileInput.files.length > 0) {
+          setResumeFile(fileInput.files[0]);
+        }
+      });
+
+      // Drag and drop handlers
+      ["dragenter", "dragover"].forEach(name => {
+        dropzone.addEventListener(name, (e) => {
+          e.preventDefault();
+          dropzone.classList.add("dragover");
+        });
+      });
+
+      ["dragleave", "drop"].forEach(name => {
+        dropzone.addEventListener(name, (e) => {
+          e.preventDefault();
+          dropzone.classList.remove("dragover");
+        });
+      });
+
+      dropzone.addEventListener("drop", (e) => {
+        if (e.dataTransfer.files.length > 0) {
+          fileInput.files = e.dataTransfer.files;
+          setResumeFile(e.dataTransfer.files[0]);
+        }
+      });
+
+      // Form submission
+      uploadForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        if (!fileInput.files.length) {
+          showToast("Please select a resume file before screening.", "warning");
+          return;
+        }
+
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = `<span class="btn-spinner"></span> Parsing & Screening with NLP...`;
+
+        const formData = new FormData();
+        formData.append("resume", fileInput.files[0]);
+        formData.append("target_role", targetRoleSelect.value);
+
+        try {
+          const res = await Api.request("/api/resume/upload", {
+            method: "POST",
+            body: formData
+          });
+
+          showToast("Resume parsed and screened successfully!", "success");
+          displayResults(res.data);
+        } catch (err) {
+          showToast(err.message, "error");
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.textContent = "Analyze & Screen Resume";
+        }
+      });
+
+      function displayResults(data) {
+        document.getElementById("results-section").style.display = "block";
+        document.getElementById("results-section").scrollIntoView({ behavior: "smooth" });
+
+        const resume = data.resume;
+        const screening = data.screening;
+        const verif = data.verification || {
+          is_verified: resume.is_verified,
+          status: resume.verification_status,
+          message: resume.verification_message,
+          registered_name: (user && user.full_name) || "Registered Profile",
+          extracted_name: resume.candidate_name
+        };
+
+        const verifBanner = document.getElementById("verification-banner");
+        const verifIcon = document.getElementById("verif-icon");
+        const verifTitle = document.getElementById("verif-title");
+        const verifDesc = document.getElementById("verif-desc");
+        const verifBadge = document.getElementById("verif-badge");
+        const proceedBtn = document.getElementById("btn-proceed-interview");
+        const proceedMsg = document.getElementById("proceed-desc-text");
+
+        verifBanner.style.display = "block";
+        if (verif.is_verified) {
+          verifBanner.style.border = "1px solid rgba(16, 185, 129, 0.45)";
+          verifBanner.style.background = "rgba(16, 185, 129, 0.1)";
+          verifIcon.textContent = "✅";
+          verifTitle.textContent = "CV Identity Verified Successfully";
+          verifTitle.style.color = "#34d399";
+          verifDesc.textContent = `Name on CV ("${verif.extracted_name || resume.candidate_name}") matches your registered name ("${user ? user.full_name : ''}"). You are authorized to proceed to the interview.`;
+          verifBadge.textContent = "VERIFIED";
+          verifBadge.style.background = "rgba(16, 185, 129, 0.2)";
+          verifBadge.style.color = "#34d399";
+          proceedBtn.disabled = false;
+          proceedBtn.style.opacity = "1";
+          proceedBtn.style.cursor = "pointer";
+          if (proceedMsg) proceedMsg.textContent = "Our dynamic question generator will tailor questions based on your identified skills and target role.";
+        } else {
+          verifBanner.style.border = "1px solid rgba(244, 63, 94, 0.6)";
+          verifBanner.style.background = "rgba(244, 63, 94, 0.12)";
+          verifIcon.textContent = "❌";
+          verifTitle.textContent = "Interview Blocked: Name Mismatch";
+          verifTitle.style.color = "#f87171";
+          verifDesc.innerHTML = `<strong style="color:#fecdd3; font-size:0.95rem;">Your registered name does not match the name on your CV. Please upload the correct CV.</strong><br><span style="font-size:0.82rem; color:var(--text-muted); margin-top:4px; display:inline-block;">Registered Name: <strong>${user ? user.full_name : 'Unknown'}</strong> &bull; Name Detected on CV: <strong>${verif.extracted_name || resume.candidate_name || 'None'}</strong></span>`;
+          verifBadge.textContent = "REJECTED";
+          verifBadge.style.background = "rgba(244, 63, 94, 0.25)";
+          verifBadge.style.color = "#f43f5e";
+          proceedBtn.disabled = true;
+          proceedBtn.style.opacity = "0.4";
+          proceedBtn.style.cursor = "not-allowed";
+          if (proceedMsg) proceedMsg.innerHTML = `<span style="color:#f87171; font-weight:600;">⚠ Interview Blocked: Your registered name does not match the name on your CV. Please upload the correct CV above to proceed.</span>`;
+        }
+
+        document.getElementById("result-candidate-name").textContent = resume.candidate_name || "Candidate";
+        document.getElementById("result-target-role").textContent = `Target Role: ${screening.target_role}`;
+        document.getElementById("result-screening-score").textContent = `${screening.screening_score}%`;
+
+        // Tech Skills
+        let techHtml = "";
+        (resume.technical_skills || []).forEach(s => techHtml += `<span class="badge-tag tech">${s}</span>`);
+        document.getElementById("result-tech-skills").innerHTML = techHtml || "<span style='color:var(--text-muted)'>None detected</span>";
+
+        // Soft Skills
+        let softHtml = "";
+        (resume.soft_skills || []).forEach(s => softHtml += `<span class="badge-tag soft">${s}</span>`);
+        document.getElementById("result-soft-skills").innerHTML = softHtml || "<span style='color:var(--text-muted)'>None detected</span>";
+
+        // Matched Skills
+        let matchHtml = "";
+        (screening.matched_required_skills || []).forEach(s => matchHtml += `<span class="badge-tag tech" style="background:rgba(16,185,129,0.15); color:#6ee7b7;">✓ ${s}</span>`);
+        document.getElementById("result-matched-skills").innerHTML = matchHtml || "<span style='color:var(--text-muted)'>No exact matches</span>";
+
+        // Missing Skills
+        let missHtml = "";
+        (screening.missing_required_skills || []).forEach(s => missHtml += `<span class="badge-tag" style="color:#fcd34d;">+ ${s}</span>`);
+        document.getElementById("result-missing-skills").innerHTML = missHtml || "<span style='color:#34d399;'>All core requirements covered!</span>";
+
+        // Connect button
+        document.getElementById("btn-proceed-interview").onclick = () => {
+          if (!proceedBtn.disabled) {
+            window.location.href = `interview.html?role=${encodeURIComponent(screening.target_role)}`;
+          }
+        };
+      }
+    });
+  </script>
+
+  <footer class="footer" style="margin-top: 50px; text-align: center; border-top: 1px solid var(--border-color); padding: 24px 0;">
+    <div class="container">
+      <p style="font-size: 0.9rem; color: var(--text-secondary); font-weight: 600;">
+        AI Interview System &bull; Final Year Computer Engineering Project
+      </p>
+      <p style="font-size: 0.82rem; color: var(--text-muted); margin-top: 4px;">
+        Department of Computer Engineering &bull; Mid-West University, Surkhet, Nepal
+      </p>
+    </div>
+  </footer>
+</body>
+</html>

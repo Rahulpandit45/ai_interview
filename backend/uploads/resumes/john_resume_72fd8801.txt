@@ -1,0 +1,8 @@
+John Alexander Doe
+Email: john@example.com | Phone: +1-555-0199
+EDUCATION
+Bachelor in Computer Science, State University
+TECHNICAL SKILLS
+Python, Flask, Docker, PostgreSQL, React, Git, Linux
+EXPERIENCE
+Software Engineer with 2 years of experience.

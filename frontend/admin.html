@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Administrator Console - AI Video Interview System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <script>(function(){try{var t=localStorage.getItem("ai_theme")||"dark";document.documentElement.setAttribute("data-theme",t);}catch(e){}})();</script>
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="container nav-container">
+      <a href="index.html" class="brand-logo">
+        <div class="brand-icon">⚡</div>
+        <span>AI Video <span class="gradient-text">Interview System</span></span>
+      </a>
+      <ul class="nav-links" id="main-nav-links">
+        <li><a href="index.html" class="nav-link">Home</a></li>
+        <li><a href="admin.html" class="nav-link active">Admin Console</a></li>
+        <li><a href="db_viewer.html" class="nav-link">Database Records</a></li>
+      </ul>
+      <div id="nav-user-slot" class="nav-user"></div>
+    </div>
+  </nav>
+
+  <div class="container" style="padding-top: 40px; padding-bottom: 80px;">
+
+    <!-- Console Header -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; flex-wrap: wrap; gap: 16px;">
+      <div>
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px; flex-wrap: wrap;">
+          <span class="badge-role" style="background: rgba(99, 102, 241, 0.2); color: #a5b4fc; font-weight: 700;" id="admin-badge-id">ADMIN ID: ADM-2026-001</span>
+          <span class="badge-role" style="background: rgba(16, 185, 129, 0.15); color: #34d399; font-weight: 700;" id="admin-badge-inst">Mid-West University</span>
+        </div>
+        <h1 style="font-size: 2.2rem;">Talent Acquisition & <span class="gradient-text">Admin Console</span></h1>
+        <p style="color: var(--text-secondary); margin-top: 4px;">Candidate evaluation metrics, multimodal AI scores, and ranked assessment reports.</p>
+      </div>
+      <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+        <button class="btn btn-primary btn-sm" onclick="openProvisionModal()">➕ Provision Admin</button>
+        <a href="db_viewer.html" class="btn btn-secondary btn-sm">🗄️ Database Explorer</a>
+        <button class="btn btn-outline btn-sm" onclick="loadRecruiterData()">🔄 Refresh Data</button>
+      </div>
+    </div>
+
+    <!-- Admin KPI Metrics Row -->
+    <div class="grid-3" style="margin-bottom: 32px;">
+      <div class="glass-card">
+        <div style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Total Registered Applicants</div>
+        <div style="font-size: 2.5rem; font-weight: 800; font-family: var(--font-display); color: #818cf8; margin-top: 10px;" id="admin-total-candidates">--</div>
+        <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 4px;">Active talent pool in system</div>
+      </div>
+
+      <div class="glass-card">
+        <div style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Completed Assessments</div>
+        <div style="font-size: 2.5rem; font-weight: 800; font-family: var(--font-display); color: var(--accent-cyan); margin-top: 10px;" id="admin-completed-interviews">--</div>
+        <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 4px;">Evaluated via multimodal fusion models</div>
+      </div>
+
+      <div class="glass-card">
+        <div style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Applicant Pool Average</div>
+        <div style="font-size: 2.5rem; font-weight: 800; font-family: var(--font-display); color: var(--accent-emerald); margin-top: 10px;" id="admin-avg-score">--%</div>
+        <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 4px;">Composite scoring benchmark</div>
+      </div>
+    </div>
+
+    <!-- Candidate Search by ID Section -->
+    <div class="candidate-search-card" id="admin-search-candidate-section">
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+        <div>
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+            <span class="badge-role" style="background: rgba(99, 102, 241, 0.2); color: #a5b4fc; font-weight: 700;">PRO FEATURE</span>
+            <h2 style="font-size: 1.35rem; margin: 0; color: var(--text-primary);">Search Candidate Record</h2>
+          </div>
+          <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 0;">
+            Enter an applicant's unique Candidate ID to inspect their complete verification dossier, Q&A records, adaptive interview flow, and proctoring security logs.
+          </p>
+        </div>
+      </div>
+
+      <form id="admin-search-form" class="search-input-group" onsubmit="handleCandidateSearch(event)">
+        <input 
+          type="text" 
+          id="admin-search-cid" 
+          class="search-input-field" 
+          placeholder="Enter Candidate ID (e.g. CID-2026-9E4B2A or AI-2026-0001)..." 
+          required 
+          autocomplete="off"
+        >
+        <button type="submit" class="btn btn-primary" id="btn-admin-search" style="padding: 13px 26px; font-weight: 700;">
+          🔍 Search Candidate
+        </button>
+      </form>
+
+      <!-- Quick Candidate Pool Chips -->
+      <div class="candidate-quick-chips" id="admin-quick-chips-wrap" style="display: none;">
+        <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">Candidate Talent Pool:</span>
+        <div id="admin-quick-chips-list" style="display: flex; gap: 8px; flex-wrap: wrap;"></div>
+      </div>
+
+      <!-- Quick Search Status / Alert -->
+      <div id="admin-search-status" style="margin-top: 14px; display: none;"></div>
+    </div>
+
+    <!-- Candidate Ranking Table Card -->
+    <div class="glass-card">
+      <div class="glass-card-header" style="flex-wrap: wrap; gap: 16px;">
+        <div>
+          <h3 class="section-title" style="font-size: 1.3rem;">Candidate Performance Ranking</h3>
+          <p class="section-subtitle">Ranked by multimodal AI evaluation (Text semantic relevance + Speech prosody + Facial gaze/pose)</p>
+        </div>
+        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+          <input type="text" id="admin-search-input" class="form-control" placeholder="Search candidate, role, or score..." style="width: 240px;" oninput="filterRankings()">
+          <select id="admin-role-filter" class="form-control" style="width: 170px;" onchange="filterRankings()">
+            <option value="">All Disciplines</option>
+            <option value="Software Engineer">Software Engineer</option>
+            <option value="AI/ML Engineer">AI/ML Engineer</option>
+            <option value="Full Stack Developer">Full Stack Developer</option>
+            <option value="Data Scientist">Data Scientist</option>
+          </select>
+          <button type="button" class="btn-export" onclick="exportCandidates('csv')" title="Export candidate data to CSV spreadsheet">
+            📥 CSV
+          </button>
+          <button type="button" class="btn-export" style="background: rgba(99, 102, 241, 0.15); border-color: rgba(99, 102, 241, 0.3); color: #a5b4fc;" onclick="exportCandidates('json')" title="Export candidate data to JSON file">
+            📋 JSON
+          </button>
+        </div>
+      </div>
+
+      <div class="table-responsive" style="margin-top: 12px;">
+        <table class="custom-table">
+          <thead>
+            <tr>
+              <th style="width: 70px;">Rank</th>
+              <th>Candidate Name</th>
+              <th>Target Discipline</th>
+              <th>Overall Score</th>
+              <th>Communication</th>
+              <th>Technical</th>
+              <th>Eye Contact</th>
+              <th>Interview Date</th>
+              <th style="text-align: right;">Action</th>
+            </tr>
+          </thead>
+          <tbody id="admin-rankings-tbody">
+            <tr>
+              <td colspan="9" style="text-align: center; color: var(--text-muted); padding: 32px;">Loading candidate rankings...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="js/main.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    let allRankings = [];
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      // Enforce strict administrator authorization guard
+      const user = Api.getUser();
+      const token = Api.getToken();
+      if (!token) {
+        window.location.href = "login.html?portal=admin";
+        return;
+      }
+      if (!user || (user.role !== "admin" && user.role !== "recruiter")) {
+        Api.clearAuth();
+        showToast("Access Denied: Candidate accounts cannot access the Administrator Console.", "error");
+        setTimeout(() => {
+          window.location.href = "dashboard.html";
+        }, 1000);
+        return;
+      }
+
+      // Display official Admin ID and Institution
+      if (user.admin_id) {
+        document.getElementById("admin-badge-id").textContent = `ADMIN ID: ${user.admin_id}`;
+      }
+      if (user.institution) {
+        document.getElementById("admin-badge-inst").textContent = user.institution;
+      }
+
+      loadRecruiterData();
+      loadCandidatePoolChips();
+    });
+
+    async function loadRecruiterData() {
+      try {
+        const res = await Api.request("/api/admin/stats");
+        const data = res.data;
+        document.getElementById("admin-total-candidates").textContent = data.total_candidates;
+        document.getElementById("admin-completed-interviews").textContent = data.completed_interviews;
+        document.getElementById("admin-avg-score").textContent = `${data.average_score}%`;
+
+        allRankings = data.candidate_rankings || [];
+        renderRankings(allRankings);
+      } catch (err) {
+        console.error("Admin stats error:", err);
+        showToast("Failed to load administrator metrics: " + err.message, "error");
+      }
+    }
+
+    async function loadCandidatePoolChips() {
+      try {
+        const res = await Api.request("/api/admin/candidates");
+        if (res && res.candidates && res.candidates.length > 0) {
+          const wrap = document.getElementById("admin-quick-chips-wrap");
+          const list = document.getElementById("admin-quick-chips-list");
+          wrap.style.display = "flex";
+          list.innerHTML = "";
+          res.candidates.slice(0, 8).forEach(c => {
+            const cid = c.candidate_id || `CID-${c.id}`;
+            const chip = document.createElement("button");
+            chip.type = "button";
+            chip.className = "candidate-chip";
+            chip.textContent = `${cid} (${c.full_name})`;
+            chip.onclick = () => {
+              document.getElementById("admin-search-cid").value = cid;
+              handleCandidateSearchDirect(cid);
+            };
+            list.appendChild(chip);
+          });
+        }
+      } catch (err) {
+        console.warn("Could not load candidate pool chips:", err);
+      }
+    }
+
+    async function handleCandidateSearch(e) {
+      e.preventDefault();
+      const cid = document.getElementById("admin-search-cid").value.trim();
+      if (!cid) return;
+      handleCandidateSearchDirect(cid);
+    }
+
+    async function handleCandidateSearchDirect(candidateId) {
+      const btn = document.getElementById("btn-admin-search");
+      const statusDiv = document.getElementById("admin-search-status");
+
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = "Verifying ID...";
+      }
+      statusDiv.style.display = "block";
+      statusDiv.innerHTML = `<span style="color: var(--text-muted); font-size: 0.9rem;">Querying database for Candidate ID <strong>${escapeHtml(candidateId)}</strong>...</span>`;
+
+      try {
+        const res = await Api.request(`/api/admin/candidates/search-by-id?id=${encodeURIComponent(candidateId)}`);
+        if (res && res.status === "success") {
+          const cand = res.candidate;
+          statusDiv.innerHTML = `
+            <div style="background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: var(--radius-sm); padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+              <div>
+                <strong style="color: #34d399;">✓ Candidate Record Verified:</strong> 
+                <span style="color: var(--text-primary); font-weight: 700; margin-left: 6px;">${escapeHtml(cand.full_name)}</span> 
+                <span class="badge-role" style="background: rgba(99, 102, 241, 0.2); color: #a5b4fc; margin-left: 8px;">${escapeHtml(cand.candidate_id)}</span>
+              </div>
+              <a href="candidate_report.html?candidate_id=${encodeURIComponent(cand.candidate_id)}" class="btn btn-primary btn-sm" style="font-weight: 700;">
+                Open Complete Report ➡️
+              </a>
+            </div>
+          `;
+          setTimeout(() => {
+            window.location.href = `candidate_report.html?candidate_id=${encodeURIComponent(cand.candidate_id)}`;
+          }, 450);
+        }
+      } catch (err) {
+        statusDiv.innerHTML = `
+          <div style="background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: var(--radius-sm); padding: 12px 16px; color: #f87171; font-size: 0.9rem;">
+            ⚠️ ${escapeHtml(err.message || `No candidate record found matching ID '${candidateId}'.`)}
+          </div>
+        `;
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = "🔍 Search Candidate";
+        }
+      }
+    }
+
+    function renderRankings(rankings) {
+      const tbody = document.getElementById("admin-rankings-tbody");
+      if (rankings.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; padding:32px; color:var(--text-muted);">No candidate interview records found.</td></tr>`;
+        return;
+      }
+
+      let rows = "";
+      rankings.forEach(r => {
+        const scoreColor = r.overall_score >= 80 ? "var(--accent-emerald)" : (r.overall_score >= 65 ? "#818cf8" : "var(--accent-amber)");
+        const photoSrc = r.profile_photo_url || "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='38' height='38' viewBox='0 0 24 24' fill='%236366f1'><circle cx='12' cy='8' r='4'/><path d='M4 20c0-4 4-6 8-6s8 2 8 6'/></svg>";
+        const candParam = r.candidate_id || r.candidate_name || r.id;
+
+        rows += `
+          <tr>
+            <td><span class="badge-role" style="background:rgba(99,102,241,0.2); font-weight:800; color:#a5b4fc;">#${r.rank}</span></td>
+            <td>
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <img src="${photoSrc}" class="candidate-avatar-table" alt="${escapeHtml(r.candidate_name)}">
+                <div>
+                  <div style="font-weight:600; color:var(--text-primary);">${escapeHtml(r.candidate_name)}</div>
+                  <div style="font-size:0.78rem; font-family:var(--font-display); color:#a5b4fc; font-weight:600;">
+                    ${r.candidate_id ? escapeHtml(r.candidate_id) : "CID-UNASSIGNED"}
+                  </div>
+                </div>
+              </div>
+            </td>
+            <td><span class="badge-tag tech" style="margin:0;">${escapeHtml(r.target_role)}</span></td>
+            <td style="font-weight:800; font-size:1.05rem; color:${scoreColor};">${r.overall_score}%</td>
+            <td>${r.communication_score}%</td>
+            <td>${r.technical_score}%</td>
+            <td>${r.eye_contact_pct}%</td>
+            <td style="color:var(--text-muted); font-size:0.88rem;">${r.date}</td>
+            <td style="text-align: right; white-space: nowrap;">
+              <a href="candidate_report.html?candidate_id=${encodeURIComponent(candParam)}" class="btn btn-primary btn-sm" style="font-weight:700; margin-right:6px;">Dossier</a>
+              <a href="report.html?interview_id=${r.interview_id}" class="btn btn-outline btn-sm">Report</a>
+            </td>
+          </tr>
+        `;
+      });
+      tbody.innerHTML = rows;
+    }
+
+    function filterRankings() {
+      const query = (document.getElementById("admin-search-input")?.value || "").trim().toLowerCase();
+      const roleFilter = (document.getElementById("admin-role-filter")?.value || "").trim().toLowerCase();
+
+      const filtered = allRankings.filter(r => {
+        const matchesQuery = !query ||
+          (r.candidate_name && r.candidate_name.toLowerCase().includes(query)) ||
+          (r.candidate_id && r.candidate_id.toLowerCase().includes(query)) ||
+          (r.target_role && r.target_role.toLowerCase().includes(query)) ||
+          String(r.overall_score).includes(query);
+
+        const matchesRole = !roleFilter ||
+          (r.target_role && r.target_role.toLowerCase().includes(roleFilter));
+
+        return matchesQuery && matchesRole;
+      });
+
+      renderRankings(filtered);
+    }
+
+    async function exportCandidates(format = "csv") {
+      try {
+        showToast(`Generating ${format.toUpperCase()} export...`, "info");
+        const token = Api.getToken();
+        const role = (document.getElementById("admin-role-filter")?.value || "").trim();
+        let url = `/api/admin/export-candidates?format=${format}`;
+        if (role) url += `&role=${encodeURIComponent(role)}`;
+
+        const response = await fetch(`${API_BASE}${url}`, {
+          headers: {
+            "Authorization": `Bearer ${token}`
+          }
+        });
+
+        if (!response.ok) {
+          const errData = await response.json().catch(() => ({}));
+          throw new Error(errData.message || `Export failed with status ${response.status}`);
+        }
+
+        const blob = await response.blob();
+        const downloadUrl = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.style.display = "none";
+        a.href = downloadUrl;
+        a.download = `candidates_export_${new Date().toISOString().slice(0, 10)}.${format}`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(downloadUrl);
+        a.remove();
+        showToast(`${format.toUpperCase()} roster exported successfully!`, "success");
+      } catch (err) {
+        console.error("Export error:", err);
+        showToast("Export failed: " + err.message, "error");
+      }
+    }
+
+    function escapeHtml(str) {
+      if (!str) return "";
+      return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    }
+
+    // Provision Admin Modal logic
+    function openProvisionModal() {
+      const modal = document.getElementById("provision-admin-modal");
+      if (modal) modal.style.display = "flex";
+    }
+
+    function closeProvisionModal() {
+      const modal = document.getElementById("provision-admin-modal");
+      if (modal) modal.style.display = "none";
+    }
+
+    async function handleProvisionSubmit(e) {
+      e.preventDefault();
+      const submitBtn = document.getElementById("btn-submit-provision");
+      const name = document.getElementById("prov-name").value.trim();
+      const email = document.getElementById("prov-email").value.trim();
+      const password = document.getElementById("prov-password").value.trim();
+      const institution = document.getElementById("prov-institution").value.trim();
+      const roleTitle = document.getElementById("prov-role-title").value.trim();
+
+      try {
+        submitBtn.disabled = true;
+        submitBtn.textContent = "Provisioning Official Account...";
+
+        const res = await Api.request("/api/admin/provision", {
+          method: "POST",
+          body: JSON.stringify({
+            full_name: name,
+            email: email,
+            password: password,
+            institution: institution,
+            target_role: roleTitle
+          })
+        });
+
+        const newAdmin = res.admin;
+        showToast(`Official Admin ID ${newAdmin.admin_id} issued successfully for ${newAdmin.full_name}!`, "success");
+        closeProvisionModal();
+        document.getElementById("provision-form").reset();
+      } catch (err) {
+        showToast(err.message || "Failed to provision administrator account", "error");
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Issue Official Admin Account";
+      }
+    }
+  </script>
+
+  <!-- Institutional Admin Provisioning Modal -->
+  <div id="provision-admin-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(6px); z-index: 9999; align-items: center; justify-content: center; padding: 20px;">
+    <div class="glass-card" style="max-width: 480px; width: 100%; border: 1px solid rgba(99, 102, 241, 0.4);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <div>
+          <span class="badge-role" style="background: rgba(99, 102, 241, 0.2); color: #a5b4fc; font-weight: 700;">INSTITUTIONAL ACCESS</span>
+          <h3 style="font-size: 1.4rem; margin-top: 6px;">Provision Admin Account</h3>
+          <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 2px;">Create official company or university administrative credentials</p>
+        </div>
+        <button type="button" class="btn btn-outline btn-sm" onclick="closeProvisionModal()" style="padding: 4px 10px; font-size: 1.1rem;">&times;</button>
+      </div>
+
+      <form id="provision-form" onsubmit="handleProvisionSubmit(event)">
+        <div class="input-group">
+          <label for="prov-name">Administrator Full Name</label>
+          <input type="text" id="prov-name" class="form-control" placeholder="e.g. Dr. Hari Prasad" required>
+        </div>
+
+        <div class="input-group">
+          <label for="prov-email">Official Institutional Email</label>
+          <input type="email" id="prov-email" class="form-control" placeholder="admin.faculty@mwu.edu.np" required>
+        </div>
+
+        <div class="input-group">
+          <label for="prov-password">Temporary Initial Password</label>
+          <input type="password" id="prov-password" class="form-control" placeholder="Minimum 6 characters" minlength="6" required>
+        </div>
+
+        <div class="input-group">
+          <label for="prov-institution">Issuing University / Company</label>
+          <input type="text" id="prov-institution" class="form-control" value="Mid-West University" required>
+        </div>
+
+        <div class="input-group">
+          <label for="prov-role-title">Administrative Role Title</label>
+          <select id="prov-role-title" class="form-control">
+            <option value="Recruitment Lead">Recruitment Lead</option>
+            <option value="Department Chair">Department Chair</option>
+            <option value="Faculty Evaluator">Faculty Evaluator</option>
+            <option value="Academic Dean">Academic Dean</option>
+          </select>
+        </div>
+
+        <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 16px;">
+          ℹ️ An official unique Admin ID (format: <code>ADM-YYYY-XXX</code>) will be generated automatically.
+        </div>
+
+        <div style="display: flex; gap: 12px; justify-content: flex-end;">
+          <button type="button" class="btn btn-outline btn-sm" onclick="closeProvisionModal()">Cancel</button>
+          <button type="submit" id="btn-submit-provision" class="btn btn-primary btn-sm">Issue Official Admin Account</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <footer class="footer" style="margin-top: 50px; text-align: center; border-top: 1px solid var(--border-color); padding: 24px 0;">
+    <div class="container">
+      <p style="font-size: 0.9rem; color: var(--text-secondary); font-weight: 600;">
+        AI Interview System &bull; Final Year Computer Engineering Project
+      </p>
+      <p style="font-size: 0.82rem; color: var(--text-muted); margin-top: 4px;">
+        Department of Computer Engineering &bull; Mid-West University, Surkhet, Nepal
+      </p>
+    </div>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Interview Room - AI Video Interview System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <script>(function(){try{var t=localStorage.getItem("ai_theme")||"dark";document.documentElement.setAttribute("data-theme",t);}catch(e){}})();</script>
+  <style>
+    /* Fullscreen loading modal */
+    .loading-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: var(--bg-primary);
+      opacity: 0.96;
+      backdrop-filter: blur(16px);
+      z-index: 1000;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+    .spinner {
+      width: 60px;
+      height: 60px;
+      border: 4px solid rgba(99, 102, 241, 0.2);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 24px;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Difficulty Progression Roadmap */
+    .progression-roadmap-wrapper {
+      margin-bottom: 20px;
+    }
+    .progression-roadmap-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .progression-roadmap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 16px;
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      backdrop-filter: blur(10px);
+      overflow-x: auto;
+    }
+    .roadmap-step {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      white-space: nowrap;
+      opacity: 0.45;
+      user-select: none;
+    }
+    .roadmap-step.active {
+      opacity: 1;
+      transform: scale(1.04);
+      box-shadow: 0 0 14px rgba(99, 102, 241, 0.3);
+    }
+    .roadmap-step.completed {
+      opacity: 0.85;
+    }
+    .roadmap-step.easy {
+      background: rgba(16, 185, 129, 0.12);
+      color: #10b981;
+      border: 1px solid rgba(16, 185, 129, 0.35);
+    }
+    .roadmap-step.medium {
+      background: rgba(245, 158, 11, 0.12);
+      color: #f59e0b;
+      border: 1px solid rgba(245, 158, 11, 0.35);
+    }
+    .roadmap-step.hard {
+      background: rgba(244, 63, 94, 0.12);
+      color: #f43f5e;
+      border: 1px solid rgba(244, 63, 94, 0.35);
+    }
+    .roadmap-arrow {
+      color: rgba(148, 163, 184, 0.4);
+      font-size: 0.8rem;
+      user-select: none;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="container nav-container">
+      <a href="index.html" class="brand-logo">
+        <div class="brand-icon">⚡</div>
+        <span>AI Video <span class="gradient-text">Interview Room</span></span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="dashboard.html" class="nav-link">Exit to Dashboard</a></li>
+      </ul>
+      <div id="nav-user-slot" class="nav-user"></div>
+    </div>
+  </nav>
+
+  <div class="container" style="padding-top: 30px; padding-bottom: 60px;">
+    
+    <!-- Top Progress Bar -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+      <div>
+        <span id="question-number" style="font-weight: 700; font-size: 1.1rem; color: #a5b4fc;">Preparing Session...</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <span style="font-size: 0.88rem; color: var(--text-muted);">Question:</span>
+        <span id="question-counter" class="badge-role" style="font-size: 0.88rem;">1/5</span>
+      </div>
+    </div>
+
+    <!-- Difficulty Progression Roadmap -->
+    <div class="progression-roadmap-wrapper">
+      <div class="progression-roadmap-header">
+        <span>⚡ Question Progression Flow: Easy ➔ Hard</span>
+        <span id="roadmap-current-status" style="color: var(--primary); font-weight: 600;">Adaptive Sequence</span>
+      </div>
+      <div id="progression-roadmap" class="progression-roadmap">
+        <div id="step-1" class="roadmap-step easy active">
+          <span>🟢 Q1: Warm-up (Easy)</span>
+        </div>
+        <span class="roadmap-arrow">➔</span>
+        <div id="step-2" class="roadmap-step easy">
+          <span>🟢 Q2: Fundamentals (Easy)</span>
+        </div>
+        <span class="roadmap-arrow">➔</span>
+        <div id="step-3" class="roadmap-step medium">
+          <span>🟡 Q3: Applied (Medium)</span>
+        </div>
+        <span class="roadmap-arrow">➔</span>
+        <div id="step-4" class="roadmap-step hard">
+          <span>🔴 Q4: Systems (Hard)</span>
+        </div>
+        <span class="roadmap-arrow">➔</span>
+        <div id="step-5" class="roadmap-step hard">
+          <span>🔴 Q5: Scenario (Hard)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Question Banner Card -->
+    <div class="question-banner">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <span id="question-category" class="question-badge">GENERAL</span>
+          <span id="question-difficulty" class="question-badge" style="background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.35);">🟢 EASY</span>
+        </div>
+        <button id="btn-speak-question" class="btn btn-outline btn-sm">🔊 Listen to Question</button>
+      </div>
+      <h2 id="question-text" class="question-title">
+        Click "Start Interview" below when you are ready. The AI will ask questions one-by-one and record your webcam response.
+      </h2>
+    </div>
+
+    <!-- Main Video & Control Layout -->
+    <div class="interview-wrapper">
+      
+      <!-- Webcam Video Container -->
+      <div>
+        <div class="video-container">
+          <video id="webcam-video" class="video-feed" autoplay playsinline muted></video>
+          <canvas id="webcam-canvas" class="canvas-overlay"></canvas>
+
+          <!-- Video Status Bar (Top) -->
+          <div class="video-status-bar">
+            <div id="rec-indicator" class="rec-indicator" style="display: none;">
+              <div class="rec-dot"></div>
+              <span>REC</span>
+            </div>
+            <div id="timer-badge" class="timer-badge">01:00</div>
+          </div>
+
+          <!-- AI Proctoring Multi-Person Alert Banner -->
+          <div id="proctor-alert-banner" style="display: none; position: absolute; top: 56px; left: 14px; right: 14px; z-index: 50; padding: 12px 16px; border-radius: 10px; font-weight: 600; font-size: 0.88rem; backdrop-filter: blur(8px); transition: all 0.3s ease; box-shadow: 0 8px 30px rgba(0,0,0,0.6);">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span id="proctor-alert-icon" style="font-size: 1.4rem;">⚠️</span>
+              <span id="proctor-alert-text" style="flex: 1; line-height: 1.4;"></span>
+              <span id="proctor-alert-timer" style="display: none; background: rgba(0,0,0,0.5); padding: 3px 8px; border-radius: 6px; font-family: monospace; font-size: 0.85rem; border: 1px solid rgba(255,255,255,0.2);">10s</span>
+            </div>
+          </div>
+
+          <!-- Video Live HUD Overlay (Bottom) -->
+          <div class="video-metrics-overlay">
+            <div class="metric-pill" id="hud-faces-pill">
+              <span class="dot" id="hud-faces-dot" style="background: var(--accent-emerald);"></span>
+              <span>Candidate: <strong id="hud-faces-text">Alone (1 Face)</strong></span>
+            </div>
+            <div class="metric-pill">
+              <span class="dot"></span>
+              <span>Eye Contact: <strong id="hud-eye-contact">--%</strong></span>
+            </div>
+            <div class="metric-pill">
+              <span class="dot" style="background: var(--accent-cyan);"></span>
+              <span>Head Stability: <strong id="hud-posture">Centered</strong></span>
+            </div>
+            <div class="metric-pill">
+              <span class="dot" style="background: var(--primary);"></span>
+              <span>Mic: <strong id="hud-speaking">Active</strong></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Controls Bar -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; flex-wrap: wrap; gap: 16px;">
+          <div>
+            <span style="font-size: 0.85rem; color: var(--text-muted);">
+              💡 <em>Tip: Maintain steady eye contact and articulate clearly.</em>
+            </span>
+          </div>
+          <div style="display: flex; gap: 12px;">
+            <button id="btn-start-interview" class="btn btn-primary btn-lg">▶ Start Interview</button>
+            <button id="btn-next-question" class="btn btn-primary btn-lg" style="display: none;">Next Question ➔</button>
+            <button id="btn-finish-interview" class="btn btn-success btn-lg" style="display: none;">✓ Finish Interview</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Side: Speech & NLP Live Feedback Panel -->
+      <div style="display: flex; flex-direction: column; gap: 20px;">
+        
+        <!-- Live Speech Recognition Card -->
+        <div class="glass-card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <h4 style="font-size: 1rem;">Speech Recognition</h4>
+            <div class="waveform-bars">
+              <div class="waveform-bar" style="animation-delay: 0.1s;"></div>
+              <div class="waveform-bar" style="animation-delay: 0.3s;"></div>
+              <div class="waveform-bar" style="animation-delay: 0.2s;"></div>
+              <div class="waveform-bar" style="animation-delay: 0.4s;"></div>
+            </div>
+          </div>
+          <div id="live-transcript-preview" style="min-height: 120px; max-height: 200px; overflow-y: auto; font-size: 0.88rem; color: var(--text-secondary); background: rgba(0,0,0,0.3); padding: 12px; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+            Waiting for session to begin...
+          </div>
+        </div>
+
+        <!-- System Architecture Information -->
+        <div class="glass-card">
+          <h4 style="font-size: 1rem; margin-bottom: 12px;">AI Multimodal Processing</h4>
+          <div style="font-size: 0.85rem; color: var(--text-secondary); display: flex; flex-direction: column; gap: 10px;">
+            <div style="display: flex; justify-content: space-between;">
+              <span>Speech-to-Text:</span>
+              <strong style="color: var(--accent-cyan);">OpenAI Whisper</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+              <span>Semantic Similarity:</span>
+              <strong style="color: #a5b4fc;">BERT / Transformers</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+              <span>Face & Gaze Tracking:</span>
+              <strong style="color: #34d399;">MediaPipe & OpenCV</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+              <span>Final Assessment Model:</span>
+              <strong style="color: var(--accent-amber);">Multimodal Fusion RF</strong>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Fullscreen Loading Overlay -->
+  <div id="loading-overlay" class="loading-overlay">
+    <div class="spinner"></div>
+    <h2 style="font-size: 1.8rem; margin-bottom: 10px;">Processing Interview Data</h2>
+    <p id="loading-status-text" style="color: var(--text-secondary); max-width: 500px;">
+      Running speech transcription, NLP semantic evaluation, and Computer Vision behavioral analytics...
+    </p>
+  </div>
+
+  <!-- Security Verification Blocking Modal -->
+  <div id="security-block-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.94); backdrop-filter: blur(12px); z-index: 2000; align-items: center; justify-content: center;">
+    <div class="glass-card" style="max-width: 520px; text-align: center; padding: 36px 30px; border: 1px solid rgba(244, 63, 94, 0.4); background: rgba(22, 30, 49, 0.98); box-shadow: 0 12px 48px rgba(244, 63, 94, 0.25);">
+      <div style="font-size: 3.5rem; margin-bottom: 12px;">🚫</div>
+      <h2 style="font-size: 1.6rem; color: #f87171; margin-bottom: 12px;">Interview Access Blocked</h2>
+      <div style="background: rgba(244, 63, 94, 0.12); border: 1px solid rgba(244, 63, 94, 0.35); border-radius: 10px; padding: 16px; margin-bottom: 20px;">
+        <p id="security-block-message" style="font-size: 1rem; color: #fecdd3; font-weight: 600; line-height: 1.5; margin: 0;">
+          Your registered name does not match the name on your CV. Please upload the correct CV.
+        </p>
+      </div>
+      <p style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 24px;">
+        For candidate identity verification, your registered account name must match the name identified on your uploaded CV before taking the interview.
+      </p>
+      <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+        <a href="resume_upload.html" class="btn btn-primary" style="background: var(--accent-rose); border-color: rgba(244,63,94,0.5);">
+          📄 Upload Correct CV
+        </a>
+        <a href="dashboard.html" class="btn btn-secondary">
+          Exit to Dashboard
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI Proctoring Interview Termination Modal -->
+  <div id="proctor-termination-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.96); backdrop-filter: blur(14px); z-index: 3000; align-items: center; justify-content: center; padding: 20px;">
+    <div class="glass-card" style="max-width: 520px; width: 100%; text-align: center; padding: 40px 32px; border: 2px solid #f43f5e; background: rgba(22, 30, 49, 0.98); box-shadow: 0 16px 60px rgba(244, 63, 94, 0.35);">
+      <div style="font-size: 3.8rem; margin-bottom: 14px;">❌</div>
+      <h2 style="font-size: 1.65rem; color: #f43f5e; font-weight: 800; margin-bottom: 14px;">Interview Terminated</h2>
+      <div style="background: rgba(244, 63, 94, 0.12); border: 1px solid rgba(244, 63, 94, 0.35); border-radius: 10px; padding: 16px; margin-bottom: 20px;">
+        <p id="proctor-termination-message" style="font-size: 1.05rem; color: #fecdd3; font-weight: 700; line-height: 1.5; margin: 0;">
+          ❌ Interview Terminated: Another person remained present after the final warning.
+        </p>
+      </div>
+      <p style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 26px; line-height: 1.5;">
+        This violation has been recorded in the session database. You are barred from continuing this interview.
+      </p>
+      <a href="dashboard.html" class="btn btn-danger btn-lg" style="width: 100%; background: #f43f5e; border-color: #f43f5e; font-weight: 700;">
+        Return to Dashboard
+      </a>
+    </div>
+  </div>
+
+  <script src="js/main.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/webcam.js"></script>
+  <script src="js/interview.js"></script>
+</body>
+</html>

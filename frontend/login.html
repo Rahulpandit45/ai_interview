@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign In - AI Video Interview System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <script>(function(){try{var t=localStorage.getItem("ai_theme")||"dark";document.documentElement.setAttribute("data-theme",t);}catch(e){}})();</script>
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="container nav-container">
+      <a href="index.html" class="brand-logo">
+        <div class="brand-icon">⚡</div>
+        <span>AI Video <span class="gradient-text">Interview System</span></span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="index.html" class="nav-link">Home</a></li>
+        <li><a href="index.html#features" class="nav-link">Platform Overview</a></li>
+        <li><a href="register.html" class="nav-link">Register</a></li>
+      </ul>
+      <div id="nav-user-slot" class="nav-user"></div>
+    </div>
+  </nav>
+
+  <div class="container" style="max-width: 480px; padding-top: 50px; padding-bottom: 60px;">
+    <div class="glass-card">
+      
+      <!-- Portal Selector -->
+      <div class="portal-tabs">
+        <button type="button" class="portal-tab active" id="tab-candidate" onclick="switchPortal('candidate')">
+          <span>👤</span> Candidate Portal
+        </button>
+        <button type="button" class="portal-tab" id="tab-admin" onclick="switchPortal('admin')">
+          <span>🛡️</span> Administrator Portal
+        </button>
+      </div>
+
+      <div style="text-align: center; margin-bottom: 24px;">
+        <h2 style="font-size: 1.7rem;" id="portal-heading">Candidate Portal</h2>
+        <p style="color: var(--text-secondary); font-size: 0.88rem; margin-top: 6px;" id="portal-desc">
+          Sign in to access your interview sessions, resume screening, and assessment reports.
+        </p>
+      </div>
+
+      <form id="login-form">
+        <input type="hidden" id="portal-role" value="candidate">
+
+        <div class="input-group">
+          <label for="email" id="login-id-label">Candidate Email or Candidate ID</label>
+          <input type="text" id="email" class="form-control" placeholder="candidate@example.com or CID-2026-XXXXXX" required autocomplete="username">
+        </div>
+
+        <div class="input-group">
+          <label for="password" id="login-password-label">Password</label>
+          <div class="password-input-wrap">
+            <input type="password" id="password" class="form-control" placeholder="••••••••" required autocomplete="current-password">
+            <button type="button" class="password-eye-btn" aria-label="Toggle password visibility" title="Show password">👁</button>
+          </div>
+        </div>
+
+        <button type="submit" id="login-submit-btn" class="btn btn-primary" style="width: 100%; margin-top: 8px;">
+          Sign In to Candidate Portal
+        </button>
+      </form>
+
+      <div id="portal-footer" style="text-align: center; margin-top: 24px; font-size: 0.9rem; color: var(--text-secondary);">
+        New candidate? <a href="register.html" style="color: #818cf8; font-weight: 600;">Create Candidate Account</a>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/main.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    function switchPortal(portal) {
+      const tabCandidate = document.getElementById("tab-candidate");
+      const tabAdmin = document.getElementById("tab-admin");
+      const portalRole = document.getElementById("portal-role");
+      const portalHeading = document.getElementById("portal-heading");
+      const portalDesc = document.getElementById("portal-desc");
+      const emailInput = document.getElementById("email");
+      const loginIdLabel = document.getElementById("login-id-label");
+      const loginPasswordLabel = document.getElementById("login-password-label");
+      const submitBtn = document.getElementById("login-submit-btn");
+      const portalFooter = document.getElementById("portal-footer");
+
+      if (portal === "admin") {
+        tabCandidate.classList.remove("active");
+        tabAdmin.classList.add("active");
+        portalRole.value = "admin";
+        portalHeading.textContent = "Administrator Portal";
+        portalDesc.textContent = "Sign in using your official institutional Admin ID and password.";
+        loginIdLabel.innerHTML = 'Official Admin ID <span style="color:#818cf8; font-size:0.8rem; font-weight:600;">(Provided by University/Company)</span>';
+        loginPasswordLabel.textContent = "Administrator Password";
+        emailInput.type = "text";
+        emailInput.placeholder = "e.g. ADM-2026-001";
+        emailInput.autocomplete = "off";
+        submitBtn.textContent = "Sign In with Official Admin ID";
+        portalFooter.innerHTML = '<span style="color:var(--text-muted); font-size:0.85rem;">🔒 Administrator accounts are issued directly by university/company administration. Public registration is strictly prohibited.</span>';
+      } else {
+        tabAdmin.classList.remove("active");
+        tabCandidate.classList.add("active");
+        portalRole.value = "candidate";
+        portalHeading.textContent = "Candidate Portal";
+        portalDesc.textContent = "Sign in to access your interview sessions, resume screening, and assessment reports.";
+        loginIdLabel.textContent = "Candidate Email or Candidate ID";
+        loginPasswordLabel.textContent = "Password";
+        emailInput.type = "text";
+        emailInput.placeholder = "candidate@example.com or CID-2026-XXXXXX";
+        emailInput.autocomplete = "username";
+        submitBtn.textContent = "Sign In to Candidate Portal";
+        portalFooter.innerHTML = 'New candidate? <a href="register.html" style="color: #818cf8; font-weight: 600;">Create Candidate Account</a>';
+      }
+    }
+
+    // Auto-detect portal from URL parameter (e.g. login.html?portal=admin)
+    document.addEventListener("DOMContentLoaded", () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const portalParam = (urlParams.get("portal") || urlParams.get("role") || "").toLowerCase();
+      if (portalParam === "admin" || portalParam === "recruiter") {
+        switchPortal("admin");
+      } else {
+        switchPortal("candidate");
+      }
+    });
+  </script>
+
+  <footer class="footer" style="margin-top: 40px; text-align: center; border-top: 1px solid var(--border-color); padding: 24px 0;">
+    <div class="container">
+      <p style="font-size: 0.9rem; color: var(--text-secondary); font-weight: 600;">
+        AI Interview System &bull; Final Year Computer Engineering Project
+      </p>
+      <p style="font-size: 0.82rem; color: var(--text-muted); margin-top: 4px;">
+        Department of Computer Engineering &bull; Mid-West University, Surkhet, Nepal
+      </p>
+    </div>
+  </footer>
+</body>
+</html>
