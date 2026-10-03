@@ -38,7 +38,7 @@ def get_candidates(current_user):
     if role_filter:
         query = query.filter(User.target_role == role_filter)
         
-    candidates = query.order_by(User.created_at.desc()).all()
+    candidates = query.all()
     results = []
     
     for c in candidates:
@@ -49,6 +49,13 @@ def get_candidates(current_user):
         if c.profile_photo:
             clean_photo = c.profile_photo.replace("\\", "/")
             photo_url = f"/uploads/{clean_photo}" if not clean_photo.startswith("/") else clean_photo
+
+        # Most recent activity: latest interview (completed_at or started_at) or account creation
+        recent_activity_dt = c.created_at
+        if latest_interview:
+            int_dt = latest_interview.completed_at or latest_interview.started_at
+            if int_dt and (not recent_activity_dt or int_dt > recent_activity_dt):
+                recent_activity_dt = int_dt
 
         results.append({
             "id": c.id,
@@ -63,8 +70,17 @@ def get_candidates(current_user):
             "screening_score": latest_resume.screening_score if latest_resume else None,
             "latest_interview_score": latest_interview.overall_score if latest_interview else None,
             "interviews_count": len(c.interviews),
-            "created_at": c.created_at.strftime("%b %d, %Y") if c.created_at else ""
+            "created_at": c.created_at.strftime("%b %d, %Y") if c.created_at else "",
+            "_latest_activity_dt": recent_activity_dt
         })
+
+    # Order candidates by most recent activity (recent interview or newly created ID)
+    results.sort(
+        key=lambda x: (x.get("_latest_activity_dt") is not None, x.get("_latest_activity_dt")),
+        reverse=True
+    )
+    for r in results:
+        r.pop("_latest_activity_dt", None)
 
     return jsonify({
         "status": "success",
@@ -745,3 +761,102 @@ def list_administrators(current_user):
         "status": "success",
         "administrators": [a.to_dict() for a in admins]
     }), 200
+
+
+@admin_bp.route("/candidates/create", methods=["POST"])
+@admin_bp.route("/candidates", methods=["POST"])
+@token_required
+@admin_required
+def create_candidate_by_admin(current_user):
+    """
+    Administrator Candidate Creation Endpoint.
+    Automatically generates a collision-resistant, unique Candidate ID,
+    prevents duplicate IDs, allows admin to set the candidate password,
+    and provisions the candidate account.
+    """
+    from backend.services.database import db
+    data = request.get_json() or {}
+
+    full_name = data.get("full_name", "").strip()
+    email = data.get("email", "").strip().lower()
+    password = data.get("password", "").strip()
+    target_role = data.get("target_role", "Software Engineer").strip() or "Software Engineer"
+    institution = data.get("institution", "").strip() or getattr(current_user, "institution", "Mid-West University") or "Mid-West University"
+    phone = data.get("phone", "").strip()
+    location = data.get("location", "").strip() or "Kathmandu, Nepal"
+    custom_cid = data.get("candidate_id", "").strip().upper()
+
+    if not full_name:
+        return jsonify({"status": "error", "message": "Candidate full name is required", "code": "NAME_REQUIRED"}), 400
+
+    if not email:
+        return jsonify({"status": "error", "message": "Candidate email address is required", "code": "EMAIL_REQUIRED"}), 400
+
+    if not password:
+        return jsonify({"status": "error", "message": "Candidate password is required", "code": "PASSWORD_REQUIRED"}), 400
+
+    if len(password) < 6:
+        return jsonify({"status": "error", "message": "Password must be at least 6 characters long", "code": "PASSWORD_TOO_SHORT"}), 400
+
+    # Ensure email is unique across the system
+    if User.query.filter_by(email=email).first():
+        return jsonify({
+            "status": "error",
+            "message": f"An account with email '{email}' already exists.",
+            "code": "EMAIL_ALREADY_EXISTS"
+        }), 409
+
+    # Generate or validate unique Candidate ID
+    if custom_cid:
+        if User.query.filter_by(candidate_id=custom_cid).first():
+            return jsonify({
+                "status": "error",
+                "message": f"Candidate ID '{custom_cid}' is already in use. Please generate a unique ID.",
+                "code": "CANDIDATE_ID_EXISTS"
+            }), 409
+        candidate_id = custom_cid
+    else:
+        # Automatic generation with collision avoidance loop
+        candidate_id = User.generate_candidate_id()
+        max_attempts = 15
+        attempts = 0
+        while User.query.filter_by(candidate_id=candidate_id).first() is not None:
+            candidate_id = User.generate_candidate_id()
+            attempts += 1
+            if attempts > max_attempts:
+                return jsonify({
+                    "status": "error",
+                    "message": "System could not allocate a unique Candidate ID. Please try again.",
+                    "code": "CANDIDATE_ID_ALLOCATION_FAILED"
+                }), 500
+
+    new_candidate = User(
+        candidate_id=candidate_id,
+        full_name=full_name,
+        email=email,
+        role="candidate",
+        target_role=target_role,
+        institution=institution,
+        phone=phone,
+        location=location,
+        email_verified=True
+    )
+    new_candidate.set_password(password)
+
+    db.session.add(new_candidate)
+    db.session.commit()
+
+    return jsonify({
+        "status": "success",
+        "message": f"Candidate account created successfully with Candidate ID: {candidate_id}",
+        "candidate": {
+            "id": new_candidate.id,
+            "candidate_id": new_candidate.candidate_id,
+            "full_name": new_candidate.full_name,
+            "email": new_candidate.email,
+            "target_role": new_candidate.target_role,
+            "institution": new_candidate.institution,
+            "phone": new_candidate.phone,
+            "created_at": new_candidate.created_at.strftime("%Y-%m-%d %H:%M:%S") if new_candidate.created_at else None
+        }
+    }), 201

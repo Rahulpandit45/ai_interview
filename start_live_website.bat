@@ -14,7 +14,6 @@ echo.
 echo ====================================================================
 echo   Services are active!
 echo   - Local Portal:   http://localhost:5000
-echo   - Custom Domain:  https://api-interview.rahulkumarpandit.com.np
-echo                     https://interview.rahulkumarpandit.com.np
+echo   - Custom Domain:  https://interview.rahulkumarpandit.com.np
 echo ====================================================================
 pause

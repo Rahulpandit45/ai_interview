@@ -135,6 +135,18 @@
       } else {
         switchPortal("candidate");
       }
+
+      // If user typed email, pass it through to forgot-password.html
+      const forgotPwdLink = document.getElementById("forgot-password-link");
+      const emailInput = document.getElementById("email");
+      if (forgotPwdLink && emailInput) {
+        forgotPwdLink.addEventListener("click", () => {
+          const val = emailInput.value.trim();
+          if (val) {
+            forgotPwdLink.href = `forgot-password.html?email=${encodeURIComponent(val)}`;
+          }
+        });
+      }
     });
   </script>
 

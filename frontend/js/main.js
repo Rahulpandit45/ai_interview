@@ -5,13 +5,17 @@
 function getApiBase() {
   try {
     if (window.API_BASE_URL) return window.API_BASE_URL;
-    const stored = localStorage.getItem("ai_api_base");
+    let stored = localStorage.getItem("ai_api_base");
+    if (stored && stored.includes("api-interview.rahulkumarpandit.com.np")) {
+      localStorage.removeItem("ai_api_base");
+      stored = null;
+    }
     if (stored) return stored;
 
     const loc = window.location;
-    // If on Cloudflare Pages static domain, route API calls to the live API tunnel
+    // When served from the live domain, use same-origin relative endpoints
     if (loc.hostname === "interview.rahulkumarpandit.com.np") {
-      return "https://api-interview.rahulkumarpandit.com.np";
+      return "";
     }
 
     // If running on a standalone static file server (port 5500, 3000, 5173, etc.) or file: protocol,

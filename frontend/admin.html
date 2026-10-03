@@ -41,8 +41,9 @@
         <p style="color: var(--text-secondary); margin-top: 4px;">Candidate evaluation metrics, multimodal AI scores, and ranked assessment reports.</p>
       </div>
       <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
-        <button class="btn btn-primary btn-sm" onclick="openProvisionModal()">➕ Provision Admin</button>
-        <a href="db_viewer.html" class="btn btn-secondary btn-sm">🗄️ Database Explorer</a>
+        <button class="btn btn-primary btn-sm" onclick="openCreateCandidateModal()" style="font-weight: 700;">➕ Create Candidate</button>
+        <button class="btn btn-secondary btn-sm" onclick="openProvisionModal()">👤 Provision Admin</button>
+        <a href="db_viewer.html" class="btn btn-outline btn-sm">🗄️ Database Explorer</a>
         <button class="btn btn-outline btn-sm" onclick="loadRecruiterData()">🔄 Refresh Data</button>
       </div>
     </div>
@@ -122,12 +123,6 @@
             <option value="Full Stack Developer">Full Stack Developer</option>
             <option value="Data Scientist">Data Scientist</option>
           </select>
-          <button type="button" class="btn-export" onclick="exportCandidates('csv')" title="Export candidate data to CSV spreadsheet">
-            📥 CSV
-          </button>
-          <button type="button" class="btn-export" style="background: rgba(99, 102, 241, 0.15); border-color: rgba(99, 102, 241, 0.3); color: #a5b4fc;" onclick="exportCandidates('json')" title="Export candidate data to JSON file">
-            📋 JSON
-          </button>
         </div>
       </div>
 
@@ -215,7 +210,7 @@
           const list = document.getElementById("admin-quick-chips-list");
           wrap.style.display = "flex";
           list.innerHTML = "";
-          res.candidates.slice(0, 8).forEach(c => {
+          res.candidates.slice(0, 10).forEach(c => {
             const cid = c.candidate_id || `CID-${c.id}`;
             const chip = document.createElement("button");
             chip.type = "button";
@@ -400,6 +395,109 @@
       if (modal) modal.style.display = "none";
     }
 
+    // --- Candidate Creation Modal Handlers ---
+    let lastCreatedCandidate = null;
+
+    function openCreateCandidateModal() {
+      const modal = document.getElementById("create-candidate-modal");
+      if (modal) {
+        document.getElementById("create-candidate-form").reset();
+        document.getElementById("candidate-created-banner").style.display = "none";
+        document.getElementById("create-candidate-form").style.display = "block";
+        modal.style.display = "flex";
+      }
+    }
+
+    function closeCreateCandidateModal() {
+      const modal = document.getElementById("create-candidate-modal");
+      if (modal) modal.style.display = "none";
+    }
+
+    function toggleCandPasswordVisibility(inputId, btn) {
+      const input = document.getElementById(inputId);
+      if (!input) return;
+      if (input.type === "password") {
+        input.type = "text";
+        btn.textContent = "🙈";
+      } else {
+        input.type = "password";
+        btn.textContent = "👁";
+      }
+    }
+
+    async function handleCreateCandidateSubmit(e) {
+      e.preventDefault();
+      const submitBtn = document.getElementById("btn-submit-create-cand");
+      const name = document.getElementById("cand-name").value.trim();
+      const email = document.getElementById("cand-email").value.trim().toLowerCase();
+      const password = document.getElementById("cand-password").value.trim();
+      const targetRole = document.getElementById("cand-target-role").value;
+      const phone = document.getElementById("cand-phone").value.trim();
+      const institution = document.getElementById("cand-institution").value.trim();
+
+      if (password.length < 6) {
+        showToast("Password must be at least 6 characters long", "error");
+        return;
+      }
+
+      try {
+        submitBtn.disabled = true;
+        submitBtn.textContent = "Allocating Unique ID & Creating...";
+
+        const res = await Api.request("/api/admin/candidates/create", {
+          method: "POST",
+          body: JSON.stringify({
+            full_name: name,
+            email: email,
+            password: password,
+            target_role: targetRole,
+            phone: phone,
+            institution: institution
+          })
+        });
+
+        const cand = res.candidate;
+        lastCreatedCandidate = { ...cand, password };
+
+        // Show result banner with newly issued unique Candidate ID
+        document.getElementById("created-cid-val").textContent = cand.candidate_id;
+        document.getElementById("created-email-val").textContent = cand.email;
+        document.getElementById("created-pwd-val").textContent = password;
+        document.getElementById("created-name-val").textContent = cand.full_name;
+
+        document.getElementById("candidate-created-banner").style.display = "block";
+        document.getElementById("create-candidate-form").style.display = "none";
+
+        showToast(`Candidate created! Unique ID: ${cand.candidate_id}`, "success");
+
+        // Refresh stats and candidate pools
+        loadRecruiterData();
+        loadCandidatePoolChips();
+
+      } catch (err) {
+        showToast(err.message || "Failed to create candidate account", "error");
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Generate ID & Create Candidate";
+      }
+    }
+
+    function createAnotherCandidate() {
+      document.getElementById("create-candidate-form").reset();
+      document.getElementById("candidate-created-banner").style.display = "none";
+      document.getElementById("create-candidate-form").style.display = "block";
+    }
+
+    function copyCandidateCredentials() {
+      if (!lastCreatedCandidate) return;
+      const text = `AI Video Interview System - Candidate Credentials\nCandidate Name: ${lastCreatedCandidate.full_name}\nCandidate ID: ${lastCreatedCandidate.candidate_id}\nRegistered Email: ${lastCreatedCandidate.email}\nPassword: ${lastCreatedCandidate.password}\nPortal Link: ${window.location.origin}/login.html?portal=candidate`;
+      navigator.clipboard.writeText(text).then(() => {
+        showToast("Credentials copied to clipboard!", "success");
+      }).catch(() => {
+        showToast("Could not copy automatically. Please select text manually.", "info");
+      });
+    }
+
     async function handleProvisionSubmit(e) {
       e.preventDefault();
       const submitBtn = document.getElementById("btn-submit-provision");
@@ -487,6 +585,100 @@
         <div style="display: flex; gap: 12px; justify-content: flex-end;">
           <button type="button" class="btn btn-outline btn-sm" onclick="closeProvisionModal()">Cancel</button>
           <button type="submit" id="btn-submit-provision" class="btn btn-primary btn-sm">Issue Official Admin Account</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Admin Candidate Creation Modal -->
+  <div id="create-candidate-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.78); backdrop-filter: blur(8px); z-index: 9999; align-items: center; justify-content: center; padding: 20px;">
+    <div class="glass-card" style="max-width: 500px; width: 100%; border: 1.5px solid rgba(16, 185, 129, 0.45); max-height: 90vh; overflow-y: auto;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;">
+        <div>
+          <span class="badge-role" style="background: rgba(16, 185, 129, 0.2); color: #34d399; font-weight: 700;">CANDIDATE ONBOARDING</span>
+          <h3 style="font-size: 1.4rem; margin-top: 6px;">Create New Candidate</h3>
+          <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 2px;">Generate unique Candidate ID and set candidate credentials</p>
+        </div>
+        <button type="button" class="btn btn-outline btn-sm" onclick="closeCreateCandidateModal()" style="padding: 4px 10px; font-size: 1.1rem;">&times;</button>
+      </div>
+
+      <!-- Created Success Result Card -->
+      <div id="candidate-created-banner" style="display: none; background: rgba(16, 185, 129, 0.12); border: 1.5px solid rgba(16, 185, 129, 0.4); border-radius: 10px; padding: 18px; margin-bottom: 18px;">
+        <div style="display: flex; align-items: center; gap: 8px; color: #34d399; font-weight: 700; font-size: 1.05rem; margin-bottom: 12px;">
+          <span>✓</span> Candidate Created &amp; ID Allocated!
+        </div>
+        <div style="background: rgba(0, 0, 0, 0.35); border-radius: 8px; padding: 14px; font-size: 0.88rem; line-height: 1.7; color: var(--text-primary);">
+          <div><strong style="color: var(--text-muted);">Full Name:</strong> <span id="created-name-val" style="font-weight: 600;"></span></div>
+          <div><strong style="color: var(--text-muted);">Unique Candidate ID:</strong> <span id="created-cid-val" style="color: #818cf8; font-family: monospace; font-weight: 800; font-size: 1rem; letter-spacing: 0.5px;"></span></div>
+          <div><strong style="color: var(--text-muted);">Registered Email:</strong> <span id="created-email-val" style="color: #38bdf8;"></span></div>
+          <div><strong style="color: var(--text-muted);">Password:</strong> <span id="created-pwd-val" style="font-family: monospace; color: #f59e0b; font-weight: 700;"></span></div>
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-top: 14px;">
+          <button type="button" class="btn btn-primary btn-sm" onclick="copyCandidateCredentials()" style="flex: 1; padding: 10px; font-weight: 700;">
+            📋 Copy Credentials
+          </button>
+          <button type="button" class="btn btn-outline btn-sm" onclick="createAnotherCandidate()" style="padding: 10px 14px;">
+            ➕ Create Another
+          </button>
+        </div>
+      </div>
+
+      <!-- Creation Form -->
+      <form id="create-candidate-form" onsubmit="handleCreateCandidateSubmit(event)">
+        <div class="input-group">
+          <label for="cand-name">Candidate Full Name *</label>
+          <input type="text" id="cand-name" class="form-control" placeholder="e.g. Aayush Sharma" required autocomplete="off">
+        </div>
+
+        <div class="input-group">
+          <label for="cand-email">Registered Email Address *</label>
+          <input type="email" id="cand-email" class="form-control" placeholder="candidate@example.com" required autocomplete="off">
+        </div>
+
+        <div class="input-group">
+          <label for="cand-password">Candidate Password *</label>
+          <div class="password-input-wrap">
+            <input type="password" id="cand-password" class="form-control" placeholder="Minimum 6 characters" minlength="6" required autocomplete="new-password">
+            <button type="button" class="password-eye-btn" onclick="toggleCandPasswordVisibility('cand-password', this)">👁</button>
+          </div>
+          <span style="font-size: 0.78rem; color: var(--text-muted); margin-top: 4px; display: block;">
+            The candidate can sign in with this password and their Candidate ID or Email.
+          </span>
+        </div>
+
+        <div class="input-group">
+          <label for="cand-target-role">Target Discipline / Role</label>
+          <select id="cand-target-role" class="form-control">
+            <option value="Software Engineer">Software Engineer</option>
+            <option value="AI/ML Engineer">AI/ML Engineer</option>
+            <option value="Full Stack Developer">Full Stack Developer</option>
+            <option value="Data Scientist">Data Scientist</option>
+            <option value="DevOps Engineer">DevOps Engineer</option>
+            <option value="Frontend Developer">Frontend Developer</option>
+            <option value="Backend Developer">Backend Developer</option>
+          </select>
+        </div>
+
+        <div class="input-group">
+          <label for="cand-phone">Contact Phone (Optional)</label>
+          <input type="tel" id="cand-phone" class="form-control" placeholder="+977-98XXXXXXXX">
+        </div>
+
+        <div class="input-group">
+          <label for="cand-institution">Institution / University</label>
+          <input type="text" id="cand-institution" class="form-control" value="Mid-West University">
+        </div>
+
+        <div style="background: rgba(99, 102, 241, 0.08); border-left: 3px solid #6366f1; border-radius: 6px; padding: 10px 14px; margin-bottom: 18px; font-size: 0.82rem; color: var(--text-secondary); line-height: 1.5;">
+          ⚡ <strong>Automatic Unique Candidate ID:</strong> A permanent, collision-resistant Candidate ID (e.g. <code>CID-2026-XXXXXX</code>) will be generated automatically and verified against all existing records to prevent duplicates.
+        </div>
+
+        <div style="display: flex; gap: 12px; justify-content: flex-end;">
+          <button type="button" class="btn btn-outline btn-sm" onclick="closeCreateCandidateModal()">Cancel</button>
+          <button type="submit" id="btn-submit-create-cand" class="btn btn-primary btn-sm" style="font-weight: 700;">
+            Generate ID &amp; Create Candidate 🚀
+          </button>
         </div>
       </form>
     </div>

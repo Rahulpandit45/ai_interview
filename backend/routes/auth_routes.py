@@ -416,21 +416,54 @@ def forgot_password():
     if not email:
         return jsonify({"status": "error", "message": "Email address is required.", "code": "EMAIL_REQUIRED"}), 400
 
+    # In production, check if an email provider is configured
+    if Config.is_production() and not Config.is_email_configured():
+        from flask import current_app
+        is_testing = current_app and current_app.config.get("TESTING", False)
+        if not is_testing:
+            return jsonify({
+                "status": "error",
+                "message": "Email delivery service is not configured on this server. Please configure MAIL_USERNAME and MAIL_PASSWORD (16-character Google App Password) or RESEND_API_KEY in .env to dispatch live emails.",
+                "code": "EMAIL_PROVIDER_UNCONFIGURED"
+            }), 503
+
     user = User.query.filter_by(email=email).first()
+    # Also support searching by candidate_id in case candidate inputs their ID
+    if not user:
+        user = User.query.filter_by(candidate_id=email.upper()).first()
+
     reset_url = None
 
     if user:
         token = generate_password_reset_token(user, expires_in_minutes=20)
-        base_url = getattr(Config, "APP_BASE_URL", "http://localhost:5000").rstrip("/")
+        
+        configured_base = getattr(Config, "APP_BASE_URL", "").strip()
+        if configured_base and configured_base != "http://localhost:5000":
+            base_url = configured_base.rstrip("/")
+        elif request and request.headers.get("X-Forwarded-Host"):
+            proto = request.headers.get("X-Forwarded-Proto", "https")
+            base_url = f"{proto}://{request.headers.get('X-Forwarded-Host')}"
+        elif request and request.host_url:
+            base_url = request.host_url.rstrip("/")
+        else:
+            base_url = "http://localhost:5000"
+
         reset_url = f"{base_url}/reset-password.html?token={token}"
 
         # Dispatch via email service
-        EmailService.send_password_reset_email(
+        dispatch_res = EmailService.send_password_reset_email(
             to_email=user.email,
             user_name=user.full_name,
             reset_link=reset_url,
             expires_in_minutes=20
         )
+
+        if Config.is_production() and not dispatch_res.success:
+            return jsonify({
+                "status": "error",
+                "message": f"Failed to dispatch password reset email to {user.email}: {dispatch_res.message}",
+                "code": dispatch_res.error_code or "EMAIL_DELIVERY_FAILED"
+            }), 502
 
     # Generic security response preventing email enumeration
     resp = {
@@ -438,10 +471,12 @@ def forgot_password():
         "message": "If an account exists with that email address, a password reset link has been dispatched."
     }
 
-    # In local development mode, return reset_link in payload for instant testing
-    if not Config.is_production() and reset_url:
+    # In local development mode or automated test harness, return reset_link in payload
+    is_testing = current_app and current_app.config.get("TESTING", False)
+    if (not Config.is_production() or is_testing) and reset_url:
         resp["reset_link"] = reset_url
-        resp["dev_mode"] = True
+        if not Config.is_production():
+            resp["dev_mode"] = True
 
     return jsonify(resp), 200
 
@@ -485,9 +520,8 @@ def reset_password():
     """
     Sets a new password.
     Supports two secure methods:
-    1. Direct Account Verification (without OTP/Email): candidate provides email,
-       Candidate ID (or registered Full Name), and new password.
-    2. Token-based Reset: candidate provides a cryptographically signed reset token.
+    1. Token-based Reset (Primary): candidate opens email link with cryptographically signed token (No OTP needed).
+    2. Direct Account Verification (Fallback): candidate provides email, Candidate ID/Full Name.
     Enforces minimum length criteria (>= 6 chars) and matching passwords.
     """
     from backend.utils.security import verify_password_reset_token
@@ -508,41 +542,7 @@ def reset_password():
     if confirm_password and new_password != confirm_password:
         return jsonify({"status": "error", "message": "Passwords do not match. Please re-enter your password.", "code": "PASSWORDS_MISMATCH"}), 400
 
-    # Method 1: Direct Account Verification (Secure reset without OTP/email dependency)
-    if email:
-        user = User.query.filter_by(email=email).first()
-        if not user or user.role != "candidate":
-            return jsonify({
-                "status": "error",
-                "message": "No candidate account found matching this email address.",
-                "code": "USER_NOT_FOUND"
-            }), 404
-
-        if identifier:
-            id_norm = identifier.upper()
-            cid_match = user.candidate_id and user.candidate_id.upper() == id_norm
-            name_match = user.full_name and user.full_name.strip().lower() == identifier.strip().lower()
-            if not (cid_match or name_match):
-                return jsonify({
-                    "status": "error",
-                    "message": "Candidate ID or Full Name does not match our records for this account.",
-                    "code": "IDENTITY_MISMATCH"
-                }), 403
-        else:
-            return jsonify({
-                "status": "error",
-                "message": "Please enter your Candidate ID or registered Full Name for identity confirmation.",
-                "code": "IDENTIFIER_REQUIRED"
-            }), 400
-
-        user.set_password(new_password)
-        db.session.commit()
-        return jsonify({
-            "status": "success",
-            "message": "Password successfully reset! You can now log in with your new password."
-        }), 200
-
-    # Method 2: Token-based reset (for backwards compatibility if token provided)
+    # Method 1: Token-based reset (Primary - directly via password-reset email link, no OTP)
     if token:
         user, err_msg = verify_password_reset_token(token)
         if not user or err_msg:
@@ -560,10 +560,44 @@ def reset_password():
             "message": "Password successfully reset! You can now log in with your new credentials."
         }), 200
 
+    # Method 2: Direct Account Verification (Fallback when no token is present)
+    if email and identifier:
+        user = User.query.filter_by(email=email).first()
+        if not user or user.role != "candidate":
+            return jsonify({
+                "status": "error",
+                "message": "No candidate account found matching this email address.",
+                "code": "USER_NOT_FOUND"
+            }), 404
+
+        id_norm = identifier.upper()
+        cid_match = user.candidate_id and user.candidate_id.upper() == id_norm
+        name_match = user.full_name and user.full_name.strip().lower() == identifier.strip().lower()
+        if not (cid_match or name_match):
+            return jsonify({
+                "status": "error",
+                "message": "Candidate ID or Full Name does not match our records for this account.",
+                "code": "IDENTITY_MISMATCH"
+            }), 403
+
+        user.set_password(new_password)
+        db.session.commit()
+        return jsonify({
+            "status": "success",
+            "message": "Password successfully reset! You can now log in with your new password."
+        }), 200
+
+    if email and not identifier:
+        return jsonify({
+            "status": "error",
+            "message": "Please enter your Candidate ID or registered Full Name for identity confirmation.",
+            "code": "IDENTIFIER_REQUIRED"
+        }), 400
+
     return jsonify({
         "status": "error",
-        "message": "Registered email and identity confirmation are required.",
-        "code": "MISSING_CREDENTIALS"
+        "message": "Password reset token is required.",
+        "code": "TOKEN_REQUIRED"
     }), 400
 
 

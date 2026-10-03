@@ -278,10 +278,9 @@
           <div class="candidate-mini-avatar-wrap">
             <img id="sidebar-candidate-avatar" class="candidate-mini-avatar" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='44' height='44' viewBox='0 0 24 24' fill='%236366f1'><circle cx='12' cy='8' r='4'/><path d='M4 20c0-4 4-6 8-6s8 2 8 6'/></svg>" alt="Avatar">
             <span class="candidate-mini-status-dot" title="Online & Active"></span>
-          </div>
           <div class="candidate-mini-text">
-            <div class="candidate-mini-name" id="sidebar-candidate-name">Rahul Kumar Pandit</div>
-            <div class="candidate-mini-id" id="sidebar-candidate-id">CID-2026-HDP62N</div>
+            <div class="candidate-mini-name" id="sidebar-candidate-name">Candidate</div>
+            <div class="candidate-mini-id" id="sidebar-candidate-id">CID-PENDING</div>
           </div>
         </div>
 
@@ -385,44 +384,44 @@
           
           <!-- 1. Single Top Welcome Header -->
           <div class="dash-welcome-header">
-            <h2 class="dash-welcome-title">Welcome back, <span id="dash-greeting-name">Rahul</span> 👋</h2>
+            <h2 class="dash-welcome-title">Welcome back, <span id="dash-greeting-name">Candidate</span> 👋</h2>
             <p class="dash-welcome-subtitle">Track your interview progress, resume verification, and assessment readiness from one place.</p>
           </div>
 
           <!-- Hidden legacy profile hooks for backward compatibility -->
           <div style="display:none;" aria-hidden="true">
-            <span id="candidate-name">Rahul Kumar Pandit</span>
-            <span id="candidate-email">rahulkrpandit49@gmail.com</span>
+            <span id="candidate-name">Candidate</span>
+            <span id="candidate-email">candidate@example.com</span>
             <span id="candidate-discipline">Software Engineer</span>
-            <span id="candidate-id-display">CID-2026-HDP62N</span>
+            <span id="candidate-id-display">CID-PENDING</span>
             <img id="candidate-avatar" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='88' height='88' viewBox='0 0 24 24' fill='%236366f1'><circle cx='12' cy='8' r='4'/><path d='M4 20c0-4 4-6 8-6s8 2 8 6'/></svg>" alt="Avatar">
             <button type="button" id="btn-change-photo-badge" onclick="openLiveCameraModal()"></button>
             <button type="button" id="btn-change-photo-text" onclick="openLiveCameraModal()"></button>
-            <span id="profile-progress-pct">80%</span>
-            <div id="profile-progress-fill" style="width:80%;"></div>
+            <span id="profile-progress-pct">0%</span>
+            <div id="profile-progress-fill" style="width:0%;"></div>
             <div id="profile-milestones-row">
               <span id="milestone-account">✓ Account Created</span>
               <span id="milestone-email">✓ Email Verified</span>
-              <span id="milestone-cv">✓ CV Verified</span>
+              <span id="milestone-cv">CV Pending</span>
               <span id="milestone-hardware">Hardware Pending</span>
             </div>
             <!-- Dossier preservation -->
             <div class="dash-resume-dossier-card">
-              <span id="dash-resume-filename-val">Rahul_Kumar_Pandit_CV_3b1c4548.pdf</span>
-              <span id="dash-resume-date-val">Sep 20, 2026</span>
-              <span id="dash-resume-detected-val">Rahul Kumar Pandit</span>
-              <span id="dash-resume-verif-badge">✓ Verified</span>
-              <span id="dash-resume-match-val">Match: 27.7%</span>
+              <span id="dash-resume-filename-val">No CV Uploaded</span>
+              <span id="dash-resume-date-val">Pending</span>
+              <span id="dash-resume-detected-val">None</span>
+              <span id="dash-resume-verif-badge">Pending</span>
+              <span id="dash-resume-match-val">Match: 0%</span>
             </div>
             <div class="dash-content-card">
-              <span id="dash-profile-card-name">Rahul Kumar Pandit</span>
-              <span id="dash-profile-card-cid">CID-2026-HDP62N</span>
+              <span id="dash-profile-card-name">Candidate</span>
+              <span id="dash-profile-card-cid">CID-PENDING</span>
               <img id="dash-profile-card-avatar" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='44' height='44' viewBox='0 0 24 24' fill='%236366f1'><circle cx='12' cy='8' r='4'/><path d='M4 20c0-4 4-6 8-6s8 2 8 6'/></svg>" alt="Avatar">
               <div id="skills-badge-list"></div>
-              <span id="stat-skills-count">6 skills identified</span>
+              <span id="stat-skills-count">No CV Uploaded</span>
             </div>
             <div class="dash-metrics-7-grid">
-              <span id="stat-card-last-date">Sep 22</span>
+              <span id="stat-card-last-date">--</span>
             </div>
             <div id="interview-history-list"></div>
           </div>
@@ -596,7 +595,7 @@
                   <div class="check-icon">✓</div>
                   <div class="check-info">
                     <div class="check-title">Email verified</div>
-                    <div class="check-desc" id="chk-email-val">Email address confirmed (rahulkrpandit49@gmail.com)</div>
+                    <div class="check-desc" id="chk-email-val">Email address confirmed</div>
                   </div>
                 </div>
 
@@ -605,7 +604,7 @@
                   <div class="check-icon" id="chk-cv-icon">✓</div>
                   <div class="check-info">
                     <div class="check-title">CV uploaded</div>
-                    <div class="check-desc" id="chk-cv-filename">Rahul_Kumar_Pandit_CV_3b1c4548.pdf</div>
+                    <div class="check-desc" id="chk-cv-filename">No CV Uploaded</div>
                   </div>
                   <button type="button" class="btn-check-action" onclick="navigateToView('resume')">Manage CV</button>
                 </div>
@@ -827,14 +826,14 @@
               <div style="display:flex; align-items:center; gap:14px;">
                 <div style="width:48px; height:48px; border-radius:10px; background:rgba(37,99,235,0.12); display:flex; align-items:center; justify-content:center; font-size:1.6rem; color:#2563eb;">📄</div>
                 <div>
-                  <h3 style="font-size:1.15rem; margin:0;" id="resume-filename-display">Rahul_Kumar_Pandit_CV_3b1c4548.pdf</h3>
-                  <div style="font-size:0.85rem; color:var(--text-muted); margin-top:2px;" id="resume-meta-display">PDF Document &bull; Candidate: Rahul Kumar Pandit</div>
+                  <h3 style="font-size:1.15rem; margin:0;" id="resume-filename-display">No Resume Uploaded</h3>
+                  <div style="font-size:0.85rem; color:var(--text-muted); margin-top:2px;" id="resume-meta-display">PDF, DOCX or TXT &bull; Upload your CV below</div>
                 </div>
               </div>
               <div style="display:flex; align-items:center; gap:10px;">
                 <button type="button" onclick="handleViewResume()" class="btn btn-outline btn-sm">View CV</button>
                 <button type="button" onclick="handleDownloadResume()" class="btn btn-secondary btn-sm">Download CV</button>
-                <button type="button" onclick="document.getElementById('resume-file-input').click()" class="btn btn-primary btn-sm">Replace CV</button>
+                <button type="button" onclick="document.getElementById('resume-file-input').click()" class="btn btn-primary btn-sm">Upload CV</button>
               </div>
             </div>
 
@@ -844,12 +843,12 @@
               <div class="resume-compare-item">
                 <span class="resume-compare-title">Candidate Identity Verification</span>
                 <div style="display:flex; align-items:center; gap:8px; margin-top:2px;">
-                  <span id="resume-verif-status-val" class="dash-status-pill verified" style="font-size:0.85rem;">✓ Verified</span>
-                  <span style="font-size:0.85rem; color:var(--text-muted);">(Name Match Confirmed)</span>
+                  <span id="resume-verif-status-val" class="dash-status-pill" style="font-size:0.85rem; background:rgba(245, 158, 11, 0.15); color:#f59e0b;">Pending Upload</span>
+                  <span id="resume-verif-status-sub" style="font-size:0.85rem; color:var(--text-muted);">(Upload CV Below)</span>
                 </div>
                 <div style="font-size:0.82rem; color:var(--text-muted); margin-top:4px;">
-                  Candidate: <strong id="resume-candidate-name-display" style="color:var(--text-primary);">Rahul Kumar Pandit</strong> &bull; 
-                  CV Name: <strong id="resume-detected-name-display" style="color:var(--text-primary);">Rahul Kumar Pandit</strong>
+                  Candidate: <strong id="resume-candidate-name-display" style="color:var(--text-primary);">Candidate</strong> &bull; 
+                  CV Name: <strong id="resume-detected-name-display" style="color:var(--text-primary);">Pending Upload</strong>
                 </div>
               </div>
 
@@ -857,7 +856,7 @@
               <div class="resume-compare-item">
                 <span class="resume-compare-title">Resume Screening Match</span>
                 <div style="display:flex; align-items:center; gap:8px; margin-top:2px;">
-                  <span id="resume-match-pill" class="resume-compare-val" style="color:#2563eb; font-size:1.25rem;">27.7%</span>
+                  <span id="resume-match-pill" class="resume-compare-val" style="color:#2563eb; font-size:1.25rem;">--%</span>
                   <span class="dash-status-pill" style="background:rgba(37,99,235,0.1); color:#2563eb;">Role Relevance</span>
                 </div>
                 <div style="font-size:0.82rem; color:var(--text-muted); margin-top:4px;">
@@ -867,8 +866,8 @@
             </div>
 
             <!-- Verification Notice Banner -->
-            <div id="resume-verification-notice" style="padding:12px 16px; border-radius:var(--radius-md); background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.25); font-size:0.88rem; margin-top:12px;">
-              <span style="color:#10b981; font-weight:700;">✓ Identity Verified:</span> Candidate name matches registered profile. Note: 27.7% is your role-specific screening match, not an identity score.
+            <div id="resume-verification-notice" style="padding:12px 16px; border-radius:var(--radius-md); background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.25); font-size:0.88rem; margin-top:12px;">
+              <span style="color:#f59e0b; font-weight:700;">ℹ️ Action Required:</span> Please upload your resume below to verify your candidate identity and calculate your role-specific screening match.
             </div>
           </div>
 
@@ -926,27 +925,19 @@
             <div class="glass-card">
               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
                 <h3 style="font-size:1.05rem; margin:0;">Technical Competencies</h3>
-                <span id="resume-tech-count" style="font-size:0.75rem; color:#2563eb; font-weight:700;">6 skills identified</span>
+                <span id="resume-tech-count" style="font-size:0.75rem; color:var(--text-muted); font-weight:600;">No CV Uploaded</span>
               </div>
               <div id="resume-tech-skills" class="dash-skills-cloud">
-                <span class="badge-tag tech">SQL</span>
-                <span class="badge-tag tech">Python</span>
-                <span class="badge-tag tech">HTML</span>
-                <span class="badge-tag tech">Machine Learning</span>
-                <span class="badge-tag tech">Computer Vision</span>
-                <span class="badge-tag tech">CSS</span>
+                <span style="color:var(--text-muted); font-size:0.85rem;">Upload your resume above to extract technical competencies automatically.</span>
               </div>
             </div>
             <div class="glass-card">
               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
                 <h3 style="font-size:1.05rem; margin:0;">Soft & Leadership Skills</h3>
-                <span id="resume-soft-count" style="font-size:0.75rem; color:#10b981; font-weight:700;">Extracted</span>
+                <span id="resume-soft-count" style="font-size:0.75rem; color:var(--text-muted); font-weight:600;">Pending Upload</span>
               </div>
               <div id="resume-soft-skills" class="dash-skills-cloud">
-                <span class="badge-tag soft">Problem Solving</span>
-                <span class="badge-tag soft">Communication</span>
-                <span class="badge-tag soft">Critical Thinking</span>
-                <span class="badge-tag soft">Team Collaboration</span>
+                <span style="color:var(--text-muted); font-size:0.85rem;">Upload your resume above to extract soft and leadership skills automatically.</span>
               </div>
             </div>
           </div>
@@ -1311,15 +1302,10 @@
                 <div class="profile-info-card">
                   <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
                     <div class="profile-card-title" style="margin:0;">Technical Skills</div>
-                    <span id="profile-skills-count-badge" style="font-size:0.78rem; color:#2563eb; font-weight:700; background:rgba(37,99,235,0.08); padding:4px 12px; border-radius:999px;">6 skills identified</span>
+                    <span id="profile-skills-count-badge" style="font-size:0.78rem; color:var(--text-muted); font-weight:600; background:rgba(100,116,139,0.1); padding:4px 12px; border-radius:999px;">0 skills identified</span>
                   </div>
                   <div id="profile-skills-badges" class="dash-skills-cloud">
-                    <span class="badge-tag tech" data-skill="SQL">SQL <button type="button" class="btn-remove-skill" onclick="removeSkillBadge(this, 'SQL')" title="Remove skill">×</button></span>
-                    <span class="badge-tag tech" data-skill="Python">Python <button type="button" class="btn-remove-skill" onclick="removeSkillBadge(this, 'Python')" title="Remove skill">×</button></span>
-                    <span class="badge-tag tech" data-skill="HTML">HTML <button type="button" class="btn-remove-skill" onclick="removeSkillBadge(this, 'HTML')" title="Remove skill">×</button></span>
-                    <span class="badge-tag tech" data-skill="Machine Learning">Machine Learning <button type="button" class="btn-remove-skill" onclick="removeSkillBadge(this, 'Machine Learning')" title="Remove skill">×</button></span>
-                    <span class="badge-tag tech" data-skill="Computer Vision">Computer Vision <button type="button" class="btn-remove-skill" onclick="removeSkillBadge(this, 'Computer Vision')" title="Remove skill">×</button></span>
-                    <span class="badge-tag tech" data-skill="CSS">CSS <button type="button" class="btn-remove-skill" onclick="removeSkillBadge(this, 'CSS')" title="Remove skill">×</button></span>
+                    <span style="color:var(--text-muted); font-size:0.85rem;">No skills identified yet. Upload your CV or add skills manually below.</span>
                   </div>
                   <div style="margin-top: 12px; display: flex; align-items: center; gap: 8px;">
                     <button type="button" class="btn-add-skill-trigger" id="btn-show-add-skill" onclick="showInlineSkillInput()">＋ Add Skill</button>
@@ -1998,7 +1984,7 @@
       const dashLaunchType = document.getElementById("dash-launch-type");
       if (dashLaunchType) dashLaunchType.textContent = `${user.target_role || "Role-Based"} Adaptive Evaluation`;
 
-      // Single welcome greeting on dashboard (Rahul)
+      // Single welcome greeting on dashboard (first name)
       const dashGreet = document.getElementById("dash-greeting-name");
       if (dashGreet) {
         const firstName = user.full_name ? user.full_name.split(" ")[0] : "Candidate";
@@ -2016,8 +2002,10 @@
       if (chkRole) chkRole.textContent = user.target_role || "Software Engineer";
       const resumeRoleDisp = document.getElementById("resume-target-role-display");
       if (resumeRoleDisp) resumeRoleDisp.textContent = user.target_role || "Software Engineer";
+      const resumeCandDisp = document.getElementById("resume-candidate-name-display");
+      if (resumeCandDisp) resumeCandDisp.textContent = user.full_name || "Candidate";
       const chkEmail = document.getElementById("chk-email-val");
-      if (chkEmail) chkEmail.textContent = `Email address confirmed (${user.email || 'rahulkrpandit49@gmail.com'})`;
+      if (chkEmail) chkEmail.textContent = `Email address confirmed (${user.email || ''})`;
 
       // Profile Completion calculation (Requirement 7: 60%)
       let completion = 40;
@@ -2625,9 +2613,12 @@
 
           // Dashboard stats & legacy hooks
           if (document.getElementById("stat-screening-score")) document.getElementById("stat-screening-score").textContent = `${currentResume.screening_score}%`;
-          if (document.getElementById("resume-match-pill")) document.getElementById("resume-match-pill").textContent = `Match: ${currentResume.screening_score}%`;
+          if (document.getElementById("resume-match-pill")) document.getElementById("resume-match-pill").textContent = `${currentResume.screening_score}%`;
           if (document.getElementById("resume-filename-display")) document.getElementById("resume-filename-display").textContent = currentResume.filename || "Uploaded Resume";
-          if (document.getElementById("resume-meta-display")) document.getElementById("resume-meta-display").textContent = `Uploaded: ${currentResume.uploaded_at ? new Date(currentResume.uploaded_at).toLocaleDateString() : 'Active'} &bull; Candidate: ${currentResume.candidate_name || 'Extracted'}`;
+          if (document.getElementById("resume-meta-display")) document.getElementById("resume-meta-display").textContent = `PDF Document &bull; Candidate: ${currentUser?.full_name || currentResume.candidate_name || 'Candidate'}`;
+          if (document.getElementById("resume-candidate-name-display")) document.getElementById("resume-candidate-name-display").textContent = currentUser?.full_name || "Candidate";
+          if (document.getElementById("resume-detected-name-display")) document.getElementById("resume-detected-name-display").textContent = currentResume.candidate_name || "Not extracted";
+          if (document.getElementById("chk-cv-filename")) document.getElementById("chk-cv-filename").textContent = currentResume.filename || "Uploaded Resume";
 
           // Dossier Card Elements
           const formattedDate = currentResume.uploaded_at ? new Date(currentResume.uploaded_at).toLocaleDateString("en-GB", { day: '2-digit', month: 'short', year: 'numeric' }) : "Active";
@@ -2647,6 +2638,8 @@
           const verifNotice = document.getElementById("resume-verification-notice");
           const alertBox = document.getElementById("cv-security-alert");
           const dashVerifBadge = document.getElementById("dash-resume-verif-badge");
+          const resumeVerifStatusVal = document.getElementById("resume-verif-status-val");
+          const resumeVerifStatusSub = document.getElementById("resume-verif-status-sub");
 
           if (cvVerified) {
             if (document.getElementById("stat-resume-status")) {
@@ -2671,9 +2664,20 @@
               dashVerifBadge.className = "dash-status-pill verified";
             }
 
+            if (resumeVerifStatusVal) {
+              resumeVerifStatusVal.textContent = "✓ Verified";
+              resumeVerifStatusVal.className = "dash-status-pill verified";
+              resumeVerifStatusVal.style.background = "";
+              resumeVerifStatusVal.style.color = "";
+            }
+            if (resumeVerifStatusSub) {
+              resumeVerifStatusSub.textContent = "(Name Match Confirmed)";
+            }
+
             if (verifNotice) {
-              verifNotice.innerHTML = `<span style="color:#34d399; font-weight:700;">✓ Identity Verified:</span> The candidate name extracted from this CV matches your registered account. You are cleared for the AI interview.`;
+              verifNotice.innerHTML = `<span style="color:#34d399; font-weight:700;">✓ Identity Verified:</span> Candidate name matches registered profile. Note: ${currentResume.screening_score || 0}% is your role-specific screening match, not an identity score.`;
               verifNotice.style.borderColor = "rgba(16,185,129,0.3)";
+              verifNotice.style.background = "rgba(16,185,129,0.08)";
             }
 
             if (alertBox) alertBox.style.display = "none";
@@ -2702,9 +2706,20 @@
               dashVerifBadge.style.color = "#f43f5e";
             }
 
+            if (resumeVerifStatusVal) {
+              resumeVerifStatusVal.textContent = "⚠ Mismatch";
+              resumeVerifStatusVal.className = "dash-status-pill";
+              resumeVerifStatusVal.style.background = "rgba(244, 63, 94, 0.15)";
+              resumeVerifStatusVal.style.color = "#f43f5e";
+            }
+            if (resumeVerifStatusSub) {
+              resumeVerifStatusSub.textContent = "(Name Verification Failed)";
+            }
+
             if (verifNotice) {
               verifNotice.innerHTML = `<span style="color:#f87171; font-weight:700;">⚠ Security Alert:</span> Name on CV (<em>${escapeHtml(currentResume.candidate_name || 'Unknown')}</em>) does not match your registered name (<em>${escapeHtml(currentUser.full_name)}</em>). Please replace with the correct CV.`;
               verifNotice.style.borderColor = "rgba(244,63,94,0.4)";
+              verifNotice.style.background = "rgba(244,63,94,0.08)";
             }
 
             if (alertBox) {
@@ -2727,21 +2742,87 @@
           let dashSkillsHtml = "";
           let resumeTechHtml = "";
           let resumeSoftHtml = "";
+          let profileSkillsHtml = "";
 
           techSkills.forEach(s => {
             dashSkillsHtml += `<span class="badge-tag tech">${escapeHtml(s)}</span>`;
             resumeTechHtml += `<span class="badge-tag tech">${escapeHtml(s)}</span>`;
+            profileSkillsHtml += `<span class="badge-tag tech" data-skill="${escapeHtml(s)}">${escapeHtml(s)} <button type="button" class="btn-remove-skill" onclick="removeSkillBadge(this, '${escapeHtml(s)}')" title="Remove skill">×</button></span>`;
           });
           softSkills.forEach(s => {
             dashSkillsHtml += `<span class="badge-tag soft">${escapeHtml(s)}</span>`;
             resumeSoftHtml += `<span class="badge-tag soft">${escapeHtml(s)}</span>`;
           });
 
+          if (document.getElementById("resume-tech-count")) {
+            document.getElementById("resume-tech-count").textContent = `${techSkills.length} skill${techSkills.length === 1 ? '' : 's'} identified`;
+            document.getElementById("resume-tech-count").style.color = "#2563eb";
+          }
+          if (document.getElementById("resume-soft-count")) {
+            document.getElementById("resume-soft-count").textContent = `${softSkills.length} skill${softSkills.length === 1 ? '' : 's'} extracted`;
+            document.getElementById("resume-soft-count").style.color = "#10b981";
+          }
+
           if (document.getElementById("skills-badge-list")) document.getElementById("skills-badge-list").innerHTML = dashSkillsHtml || "<span style='color:var(--text-muted)'>No specific skills detected.</span>";
-          if (document.getElementById("resume-tech-skills")) document.getElementById("resume-tech-skills").innerHTML = resumeTechHtml || "<span style='color:var(--text-muted)'>No technical skills extracted.</span>";
-          if (document.getElementById("resume-soft-skills")) document.getElementById("resume-soft-skills").innerHTML = resumeSoftHtml || "<span style='color:var(--text-muted)'>No soft skills extracted.</span>";
+          if (document.getElementById("resume-tech-skills")) document.getElementById("resume-tech-skills").innerHTML = resumeTechHtml || "<span style='color:var(--text-muted); font-size:0.85rem;'>No technical skills extracted.</span>";
+          if (document.getElementById("resume-soft-skills")) document.getElementById("resume-soft-skills").innerHTML = resumeSoftHtml || "<span style='color:var(--text-muted); font-size:0.85rem;'>No soft skills extracted.</span>";
+
+          if (document.getElementById("profile-skills-badges") && profileSkillsHtml) {
+            document.getElementById("profile-skills-badges").innerHTML = profileSkillsHtml;
+            updateSkillsCount();
+          }
+        } else {
+          throw new Error("No resume found");
         }
       } catch (err) {
+        // Reset Dossier Card to clean "No CV Uploaded" state
+        if (document.getElementById("resume-filename-display")) {
+          document.getElementById("resume-filename-display").textContent = "No Resume Uploaded";
+        }
+        if (document.getElementById("resume-meta-display")) {
+          document.getElementById("resume-meta-display").textContent = `PDF, DOCX or TXT &bull; Candidate: ${currentUser?.full_name || 'Candidate'}`;
+        }
+        if (document.getElementById("resume-candidate-name-display")) {
+          document.getElementById("resume-candidate-name-display").textContent = currentUser?.full_name || "Candidate";
+        }
+        if (document.getElementById("resume-detected-name-display")) {
+          document.getElementById("resume-detected-name-display").textContent = "No CV uploaded yet";
+        }
+        if (document.getElementById("resume-verif-status-val")) {
+          const vPill = document.getElementById("resume-verif-status-val");
+          vPill.textContent = "Pending Upload";
+          vPill.className = "dash-status-pill";
+          vPill.style.background = "rgba(245, 158, 11, 0.15)";
+          vPill.style.color = "#f59e0b";
+        }
+        if (document.getElementById("resume-verif-status-sub")) {
+          document.getElementById("resume-verif-status-sub").textContent = "(Upload CV Below)";
+        }
+        if (document.getElementById("resume-match-pill")) {
+          document.getElementById("resume-match-pill").textContent = "--%";
+        }
+        const vNotice = document.getElementById("resume-verification-notice");
+        if (vNotice) {
+          vNotice.innerHTML = `<span style="color:#f59e0b; font-weight:700;">ℹ️ Action Required:</span> Please upload your resume below to verify your candidate identity and calculate your role-specific screening match.`;
+          vNotice.style.borderColor = "rgba(245, 158, 11, 0.35)";
+          vNotice.style.background = "rgba(245, 158, 11, 0.08)";
+        }
+        if (document.getElementById("dash-resume-filename-val")) {
+          document.getElementById("dash-resume-filename-val").textContent = "No CV Uploaded";
+        }
+        if (document.getElementById("dash-resume-date-val")) {
+          document.getElementById("dash-resume-date-val").textContent = "Pending";
+        }
+        if (document.getElementById("dash-resume-detected-val")) {
+          document.getElementById("dash-resume-detected-val").textContent = "None";
+        }
+        if (document.getElementById("dash-resume-match-val")) {
+          document.getElementById("dash-resume-match-val").textContent = "Match: 0%";
+        }
+        if (document.getElementById("chk-cv-filename")) {
+          document.getElementById("chk-cv-filename").textContent = "No CV Uploaded (Upload required before interview)";
+        }
+
         if (document.getElementById("stat-resume-status")) {
           document.getElementById("stat-resume-status").textContent = "No CV Uploaded";
           document.getElementById("stat-resume-status").style.background = "rgba(245, 158, 11, 0.2)";
@@ -2775,6 +2856,36 @@
           document.getElementById("cv-alert-title").textContent = "Security Guard: No CV Uploaded";
           document.getElementById("cv-alert-title").style.color = "#fbbf24";
           document.getElementById("cv-alert-msg").textContent = "You must upload a verified CV matching your registered name before starting an interview.";
+        }
+
+        // Reset skills cards to clean unuploaded state
+        if (document.getElementById("resume-tech-count")) {
+          document.getElementById("resume-tech-count").textContent = "No CV Uploaded";
+          document.getElementById("resume-tech-count").style.color = "var(--text-muted)";
+        }
+        if (document.getElementById("resume-tech-skills")) {
+          document.getElementById("resume-tech-skills").innerHTML = "<span style='color:var(--text-muted); font-size:0.85rem;'>Upload your resume above to extract technical competencies automatically.</span>";
+        }
+        if (document.getElementById("resume-soft-count")) {
+          document.getElementById("resume-soft-count").textContent = "Pending Upload";
+          document.getElementById("resume-soft-count").style.color = "var(--text-muted)";
+        }
+        if (document.getElementById("resume-soft-skills")) {
+          document.getElementById("resume-soft-skills").innerHTML = "<span style='color:var(--text-muted); font-size:0.85rem;'>Upload your resume above to extract soft and leadership skills automatically.</span>";
+        }
+        if (document.getElementById("skills-badge-list")) {
+          document.getElementById("skills-badge-list").innerHTML = "<span style='color:var(--text-muted); font-size:0.85rem;'>Upload your CV to extract and view skills.</span>";
+        }
+        if (document.getElementById("stat-skills-count")) {
+          document.getElementById("stat-skills-count").textContent = "No CV Uploaded";
+        }
+        if (document.getElementById("profile-skills-badges")) {
+          document.getElementById("profile-skills-badges").innerHTML = "<span style='color:var(--text-muted); font-size:0.85rem;'>No skills identified yet. Upload your CV or add skills manually below.</span>";
+        }
+        if (document.getElementById("profile-skills-count-badge")) {
+          document.getElementById("profile-skills-count-badge").textContent = "0 skills identified";
+          document.getElementById("profile-skills-count-badge").style.color = "var(--text-muted)";
+          document.getElementById("profile-skills-count-badge").style.background = "rgba(100,116,139,0.1)";
         }
       }
 

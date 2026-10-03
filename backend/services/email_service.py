@@ -785,6 +785,14 @@ AI Video Interview Assessment Platform
         elif Config.is_resend_configured():
             return cls._deliver_via_resend(clean_email, subject, html_content, text_content)
         
+        # Unconfigured delivery handling
+        if Config.is_production():
+            return EmailDispatchResult(
+                success=False,
+                message="SMTP email service is not configured. Please set MAIL_USERNAME and MAIL_PASSWORD (16-character Google App Password) or RESEND_API_KEY in your .env file to dispatch real reset emails.",
+                error_code="SMTP_NOT_CONFIGURED"
+            )
+
         # Development fallback
         print("=" * 72)
         print(f"  [DEVELOPMENT - PASSWORD RESET LINK GENERATED]")
