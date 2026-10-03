@@ -57,7 +57,10 @@
         </div>
 
         <div class="input-group">
-          <label for="password" id="login-password-label">Password</label>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <label for="password" id="login-password-label" style="margin-bottom: 0;">Password</label>
+            <a href="forgot-password.html" id="forgot-password-link" style="font-size: 0.82rem; color: #818cf8; text-decoration: none; font-weight: 500;">Forgot Password?</a>
+          </div>
           <div class="password-input-wrap">
             <input type="password" id="password" class="form-control" placeholder="••••••••" required autocomplete="current-password">
             <button type="button" class="password-eye-btn" aria-label="Toggle password visibility" title="Show password">👁</button>
@@ -90,6 +93,8 @@
       const submitBtn = document.getElementById("login-submit-btn");
       const portalFooter = document.getElementById("portal-footer");
 
+      const forgotPwdLink = document.getElementById("forgot-password-link");
+
       if (portal === "admin") {
         tabCandidate.classList.remove("active");
         tabAdmin.classList.add("active");
@@ -98,6 +103,7 @@
         portalDesc.textContent = "Sign in using your official institutional Admin ID and password.";
         loginIdLabel.innerHTML = 'Official Admin ID <span style="color:#818cf8; font-size:0.8rem; font-weight:600;">(Provided by University/Company)</span>';
         loginPasswordLabel.textContent = "Administrator Password";
+        if (forgotPwdLink) forgotPwdLink.style.display = "none";
         emailInput.type = "text";
         emailInput.placeholder = "e.g. ADM-2026-001";
         emailInput.autocomplete = "off";
@@ -111,6 +117,7 @@
         portalDesc.textContent = "Sign in to access your interview sessions, resume screening, and assessment reports.";
         loginIdLabel.textContent = "Candidate Email or Candidate ID";
         loginPasswordLabel.textContent = "Password";
+        if (forgotPwdLink) forgotPwdLink.style.display = "inline";
         emailInput.type = "text";
         emailInput.placeholder = "candidate@example.com or CID-2026-XXXXXX";
         emailInput.autocomplete = "username";

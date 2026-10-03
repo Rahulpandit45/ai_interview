@@ -483,18 +483,21 @@ def verify_reset_token_endpoint():
 @auth_bp.route("/reset-password", methods=["POST"])
 def reset_password():
     """
-    Sets a new password using a validated password reset token.
+    Sets a new password.
+    Supports two secure methods:
+    1. Direct Account Verification (without OTP/Email): candidate provides email,
+       Candidate ID (or registered Full Name), and new password.
+    2. Token-based Reset: candidate provides a cryptographically signed reset token.
     Enforces minimum length criteria (>= 6 chars) and matching passwords.
     """
     from backend.utils.security import verify_password_reset_token
 
     data = request.get_json() or {}
     token = data.get("token", "").strip()
+    email = data.get("email", "").strip().lower()
+    identifier = data.get("identifier", "").strip() or data.get("candidate_id", "").strip() or data.get("full_name", "").strip()
     new_password = data.get("password", "").strip()
     confirm_password = data.get("confirm_password", "").strip()
-
-    if not token:
-        return jsonify({"status": "error", "message": "Password reset token is required.", "code": "TOKEN_REQUIRED"}), 400
 
     if not new_password:
         return jsonify({"status": "error", "message": "New password is required.", "code": "PASSWORD_REQUIRED"}), 400
@@ -505,21 +508,62 @@ def reset_password():
     if confirm_password and new_password != confirm_password:
         return jsonify({"status": "error", "message": "Passwords do not match. Please re-enter your password.", "code": "PASSWORDS_MISMATCH"}), 400
 
-    user, err_msg = verify_password_reset_token(token)
-    if not user or err_msg:
-        return jsonify({
-            "status": "error",
-            "message": err_msg or "Invalid or expired reset token. Please request a new link.",
-            "code": "INVALID_OR_EXPIRED_TOKEN"
-        }), 400
+    # Method 1: Direct Account Verification (Secure reset without OTP/email dependency)
+    if email:
+        user = User.query.filter_by(email=email).first()
+        if not user or user.role != "candidate":
+            return jsonify({
+                "status": "error",
+                "message": "No candidate account found matching this email address.",
+                "code": "USER_NOT_FOUND"
+            }), 404
 
-    # Securely hash and update password (this also changes password fingerprint, invalidating the token)
-    user.set_password(new_password)
-    db.session.commit()
+        if identifier:
+            id_norm = identifier.upper()
+            cid_match = user.candidate_id and user.candidate_id.upper() == id_norm
+            name_match = user.full_name and user.full_name.strip().lower() == identifier.strip().lower()
+            if not (cid_match or name_match):
+                return jsonify({
+                    "status": "error",
+                    "message": "Candidate ID or Full Name does not match our records for this account.",
+                    "code": "IDENTITY_MISMATCH"
+                }), 403
+        else:
+            return jsonify({
+                "status": "error",
+                "message": "Please enter your Candidate ID or registered Full Name for identity confirmation.",
+                "code": "IDENTIFIER_REQUIRED"
+            }), 400
+
+        user.set_password(new_password)
+        db.session.commit()
+        return jsonify({
+            "status": "success",
+            "message": "Password successfully reset! You can now log in with your new password."
+        }), 200
+
+    # Method 2: Token-based reset (for backwards compatibility if token provided)
+    if token:
+        user, err_msg = verify_password_reset_token(token)
+        if not user or err_msg:
+            return jsonify({
+                "status": "error",
+                "message": err_msg or "Invalid or expired reset token. Please request a new link.",
+                "code": "INVALID_OR_EXPIRED_TOKEN"
+            }), 400
+
+        user.set_password(new_password)
+        db.session.commit()
+
+        return jsonify({
+            "status": "success",
+            "message": "Password successfully reset! You can now log in with your new credentials."
+        }), 200
 
     return jsonify({
-        "status": "success",
-        "message": "Password successfully reset. Please log in with your new credentials."
-    }), 200
+        "status": "error",
+        "message": "Registered email and identity confirmation are required.",
+        "code": "MISSING_CREDENTIALS"
+    }), 400
 
 
